@@ -1,0 +1,12 @@
+{
+  "Format": "2.9.0",
+  "Changes": [
+    {
+      "Action": "EditMap",
+      "Target": "Maps/ManorHouse",
+      "When": { "Akiba275.SimpleBank/EnableAtm": "true" },
+      "LogName": "Simple Bank ATM",
+      "MapProperties": { "SimpleBankAtmArea": "14,8,2,2" }
+    }
+  ]
+}

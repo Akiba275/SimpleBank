@@ -1,0 +1,31 @@
+{
+  "EnableAtm": true,
+  "DebugLogging": false,
+  "ActivityDailyRatePercent": 0.005,
+  "BaseCredit": 5000,
+  "EarningsRatio": 0.1,
+  "AbsoluteCreditCap": 1000000,
+  "OverdueRateMultiplier": 1.5,
+  "EnableOverdueCollection": true,
+  "OverdueGraceDays": 7,
+  "EnableActiveBalanceSetoff": true,
+  "MinimumActiveBalanceReserve": 0,
+  "MinimumWalletReserve": 1000,
+  "IncomeGarnishmentPercent": 25,
+  "MaximumOverdueInterestPercent": 100,
+  "DefaultAfterDays": 28,
+  "TermProducts": [
+    { "Enabled": true, "Days": 7, "DailyRatePercent": 0.01 },
+    { "Enabled": true, "Days": 14, "DailyRatePercent": 0.015 },
+    { "Enabled": true, "Days": 28, "DailyRatePercent": 0.02 },
+    { "Enabled": true, "Days": 56, "DailyRatePercent": 0.025 },
+    { "Enabled": true, "Days": 112, "DailyRatePercent": 0.03 },
+    { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }
+  ],
+  "LoanProducts": [
+    { "Enabled": true, "Days": 7, "DailyRatePercent": 0.15 },
+    { "Enabled": true, "Days": 28, "DailyRatePercent": 0.10 },
+    { "Enabled": true, "Days": 112, "DailyRatePercent": 0.06 },
+    { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }, { "Enabled": false, "Days": 1, "DailyRatePercent": 0 }
+  ]
+}

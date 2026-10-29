@@ -1,0 +1,38 @@
+{
+  "Documents": {
+    "PlayerGuide": "README.md",
+    "DevelopmentGuide": "DEVELOPMENT.md",
+    "VerificationRecord": "VERIFICATION.md",
+    "ArchiveDirectory": "docs/archive"
+  },
+  "PlayerPackage": [
+    { "Source": "README.md", "Destination": "README.md" }
+  ],
+  "SourceFiles": [
+    ".gitignore",
+    "README.md",
+    "DEVELOPMENT.md",
+    "VERIFICATION.md",
+    "SimpleBank.csproj",
+    "manifest.json",
+    "config.json",
+    "controls.json"
+  ],
+  "SourceDirectories": [
+    "assets",
+    "build",
+    "content",
+    "docs",
+    "i18n",
+    "optional",
+    "scripts",
+    "src",
+    "tests"
+  ],
+  "SourceExcludeDirectories": [
+    "bin",
+    "obj",
+    "NuGet",
+    ".vs"
+  ]
+}

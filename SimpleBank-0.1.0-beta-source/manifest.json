@@ -1,0 +1,13 @@
+{
+  "Name": "Simple Bank",
+  "Author": "Akiba275",
+  "Version": "0.1.0-beta",
+  "Description": "A small ATM and bank system for the Manor House.",
+  "UniqueID": "Akiba275.SimpleBank",
+  "EntryDll": "SimpleBank.dll",
+  "MinimumApiVersion": "4.1.0",
+  "Dependencies": [
+    { "UniqueID": "Pathoschild.ContentPatcher", "IsRequired": true }
+  ],
+  "UpdateKeys": [ "Nexus:54796", "GitHub:Akiba275/SimpleBank" ]
+}

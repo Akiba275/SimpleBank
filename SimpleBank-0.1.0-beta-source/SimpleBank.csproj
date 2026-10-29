@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>SimpleBank</AssemblyName>
+    <RootNamespace>SimpleBank</RootNamespace>
+    <Version>0.1.0-beta</Version>
+    <Authors>Akiba275</Authors>
+    <Company>Akiba275</Company>
+    <Product>Simple Bank</Product>
+    <Description>A small ATM and bank system for the Manor House.</Description>
+    <ModFolderName>SimpleBank</ModFolderName>
+    <GamePath Condition="'$(GamePath)' == ''">$(STARDEW_VALLEY_PATH)</GamePath>
+    <EnableModDeploy>false</EnableModDeploy>
+    <EnableModZip>false</EnableModZip>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+    <Compile Include="src\SimpleBank.Core\*.cs" />
+    <Compile Include="src\SimpleBank\*.cs" />
+    <Content Include="assets\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <ContentPacks Include="content\[CP] Simple Bank Map" Version="$(Version)" />
+  </ItemGroup>
+</Project>

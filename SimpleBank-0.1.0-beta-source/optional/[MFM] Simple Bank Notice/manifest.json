@@ -1,0 +1,18 @@
+{
+  "Name": "[MFM] Simple Bank Notice",
+  "Author": "Akiba275",
+  "Version": "0.1.0-beta",
+  "Description": "Optional one-time in-game notice from Mayor Lewis about the new ATM.",
+  "UniqueID": "Akiba275.SimpleBank.Mail",
+  "ContentPackFor": {
+    "UniqueID": "DIGUS.MailFrameworkMod",
+    "MinimumVersion": "1.20.0"
+  },
+  "Dependencies": [
+    {
+      "UniqueID": "Akiba275.SimpleBank",
+      "IsRequired": true
+    }
+  ],
+  "UpdateKeys": [ "Nexus:54796", "GitHub:Akiba275/SimpleBank" ]
+}

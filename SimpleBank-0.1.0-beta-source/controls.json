@@ -1,0 +1,12 @@
+{
+  "KeyboardNextPage": "Tab",
+  "KeyboardClose": "Escape, E",
+  "ControllerPreviousPage": "LeftShoulder",
+  "ControllerNextPage": "RightShoulder",
+  "ControllerConfirm": "ControllerA",
+  "ControllerBack": "ControllerB",
+  "ControllerUp": "DPadUp, LeftThumbstickUp",
+  "ControllerDown": "DPadDown, LeftThumbstickDown",
+  "ControllerLeft": "DPadLeft, LeftThumbstickLeft",
+  "ControllerRight": "DPadRight, LeftThumbstickRight"
+}

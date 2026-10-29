@@ -1,0 +1,10 @@
+{
+  "Name": "[CP] Simple Bank Map",
+  "Author": "Akiba275",
+  "Version": "0.1.0-beta",
+  "Description": "Adds the Simple Bank ATM to the Manor House.",
+  "UniqueID": "Akiba275.SimpleBank.Map",
+  "ContentPackFor": { "UniqueID": "Pathoschild.ContentPatcher", "MinimumVersion": "2.9.0" },
+  "Dependencies": [ { "UniqueID": "Akiba275.SimpleBank", "IsRequired": true } ],
+  "UpdateKeys": [ "Nexus:54796", "GitHub:Akiba275/SimpleBank" ]
+}

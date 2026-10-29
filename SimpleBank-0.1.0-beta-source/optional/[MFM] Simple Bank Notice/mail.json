@@ -1,0 +1,11 @@
+[
+  {
+    "Id": "Akiba275.SimpleBank.Mail.LewisWelcome",
+    "Title": "mail.lewis.title",
+    "Text": "mail.lewis.text",
+    "Repeatable": false,
+    "HasMods": [
+      "Akiba275.SimpleBank"
+    ]
+  }
+]

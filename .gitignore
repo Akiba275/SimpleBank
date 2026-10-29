@@ -1,0 +1,16 @@
+# Workspace-local toolchains, caches, and test environments.
+/.appdata/
+/.dotnet/
+/.dotnet-cli-home/
+/.localappdata/
+/.nuget-packages/
+/AppData/
+/NuGet/
+/.test-runtime/
+/_local/
+/dotnet-install.ps1
+
+# IDE-local files.
+*.user
+*.suo
+
