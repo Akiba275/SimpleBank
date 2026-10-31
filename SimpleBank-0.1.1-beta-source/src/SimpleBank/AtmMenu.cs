@@ -28,6 +28,9 @@ namespace SimpleBank
         private const int TermFromActiveId = 331;
         private const int PrimaryId = 400;
         private const int SecondaryId = 401;
+        private const int LoanTermsId = 402;
+        private const int LoanTermsPreviousId = 403;
+        private const int LoanTermsNextId = 404;
 
         private readonly BankService bank;
         private readonly MultiplayerCoordinator multiplayer;
@@ -47,6 +50,8 @@ namespace SimpleBank
         private bool termFromActive;
         private bool typingAmount;
         private bool awaitingConfirmation;
+        private int loanTermsPage = -1;
+        private bool IsLoanConfirmation => awaitingConfirmation && pendingAction == "loan";
         private string pendingAction;
         private string remoteAction;
         private string statusMessage;
@@ -154,6 +159,11 @@ namespace SimpleBank
 
         public override void receiveScrollWheelAction(int direction)
         {
+            if (IsLoanConfirmation && loanTermsPage >= 0)
+            {
+                ChangeLoanTermsPage(direction > 0 ? -1 : 1);
+                return;
+            }
             if (tab == 2 || tab == 3) ChangeProduct(direction > 0 ? -1 : 1);
         }
 
@@ -164,7 +174,13 @@ namespace SimpleBank
 
         internal void HandleBack()
         {
-            if (awaitingConfirmation) CancelConfirmation();
+            if (IsLoanConfirmation && loanTermsPage >= 0)
+            {
+                loanTermsPage = -1;
+                UpdateLayout(true);
+                currentlySnappedComponent = FindButton(LoanTermsId).Component;
+            }
+            else if (awaitingConfirmation) CancelConfirmation();
             else exitThisMenu();
         }
 
@@ -241,13 +257,13 @@ namespace SimpleBank
 
             var bodyTop = yPositionOnScreen + 224;
             var keypadWidth = 238;
-            var showKeypad = RequiresAmountInput();
+            var showKeypad = RequiresAmountInput() && !IsLoanConfirmation;
             var keypadLeft = showKeypad ? xPositionOnScreen + width - 28 - keypadWidth : xPositionOnScreen + width - 28;
             var contentLeft = xPositionOnScreen + 28;
             var leftWidth = keypadLeft - contentLeft - (showKeypad ? 18 : 0);
             var actionTop = yPositionOnScreen + height - 108;
 
-            if ((tab == 2 && !awaitingConfirmation) || tab == 3)
+            if ((tab == 2 || tab == 3) && !awaitingConfirmation)
             {
                 AddButton(ProductPreviousId, new Rectangle(xPositionOnScreen + 28, bodyTop + 112, 46, 42), "‹", IconKind.ArrowLeft);
                 AddButton(ProductNextId, new Rectangle(xPositionOnScreen + 28 + leftWidth - 46, bodyTop + 112, 46, 42), "›", IconKind.ArrowRight);
@@ -293,6 +309,23 @@ namespace SimpleBank
             }
 
             if (tab == 0) return;
+
+            if (IsLoanConfirmation)
+            {
+                var detailsVisible = loanTermsPage >= 0;
+                var termsWidth = detailsVisible ? (leftWidth - 16) / 3 : leftWidth;
+                AddButton(LoanTermsId, new Rectangle(contentLeft, actionTop - 42, termsWidth, 34),
+                    i18n.Get(detailsVisible ? "menu.loan.terms.back" : "menu.loan.terms.show"), IconKind.None);
+                if (detailsVisible)
+                {
+                    var pages = GetLoanTermsPages();
+                    loanTermsPage = Math.Min(loanTermsPage, pages.Length - 1);
+                    AddButton(LoanTermsPreviousId, new Rectangle(contentLeft + termsWidth + 8, actionTop - 42, termsWidth, 34),
+                        i18n.Get("menu.loan.terms.previous"), IconKind.None, enabled: loanTermsPage > 0);
+                    AddButton(LoanTermsNextId, new Rectangle(contentLeft + (termsWidth + 8) * 2, actionTop - 42, termsWidth, 34),
+                        i18n.Get("menu.loan.terms.next"), IconKind.None, enabled: loanTermsPage < pages.Length - 1);
+                }
+            }
 
             var actionWidth = (leftWidth - 10) / 2;
             var primaryText = awaitingConfirmation ? i18n.Get("menu.confirm.button") : i18n.Get("action." + GetPrimaryAction());
@@ -347,7 +380,7 @@ namespace SimpleBank
         {
             var bodyTop = yPositionOnScreen + 210;
             var bodyBottom = yPositionOnScreen + height - 58;
-            var showKeypad = RequiresAmountInput();
+            var showKeypad = RequiresAmountInput() && !IsLoanConfirmation;
             var keypadLeft = showKeypad ? xPositionOnScreen + width - 28 - 238 : xPositionOnScreen + width - 28;
             var contentRightPadding = showKeypad ? 8 : -8;
             DrawPanel(b, new Rectangle(xPositionOnScreen + 20, bodyTop, keypadLeft - (xPositionOnScreen + 20) - contentRightPadding, bodyBottom - bodyTop), new Color(255, 248, 220), new Color(151, 112, 68), 1);
@@ -371,6 +404,15 @@ namespace SimpleBank
 
             var keypadLeft = xPositionOnScreen + width - 28 - 238;
             var leftWidth = keypadLeft - left - 18;
+            if (IsLoanConfirmation)
+            {
+                var pages = loanTermsPage >= 0 ? GetLoanTermsPages() : null;
+                var text = pages == null ? Game1.parseText(GetConfirmationText(), Game1.smallFont, width - 56)
+                    : pages[Math.Min(loanTermsPage, pages.Length - 1)];
+                Utility.drawTextWithShadow(b, text, Game1.smallFont,
+                    new Vector2(left, bodyTop + 8), new Color(130, 55, 35));
+                return;
+            }
             if (tab == 2 && awaitingConfirmation)
             {
                 // Give the full left pane to confirmation, including wrapped large amounts and early-close details.
@@ -429,7 +471,7 @@ namespace SimpleBank
                         index = termDepositIndex + 1,
                         count = account.TermDeposits.Count,
                         amount = FormatGold(deposit.PayableBalance),
-                        day = deposit.MaturityDay
+                        due = FormatMaturity(deposit.MaturityDay, (int)Game1.stats.DaysPlayed)
                     });
                 var detailLeft = account.TermDeposits.Count > 1 ? left + 46 : left;
                 var detailWidth = account.TermDeposits.Count > 1 ? leftWidth - 92 : leftWidth;
@@ -447,18 +489,17 @@ namespace SimpleBank
                     {
                         principal = FormatGold(loan.Principal),
                         interest = FormatGold(loan.PayableInterest),
-                        day = loan.MaturityDay,
+                        due = FormatMaturity(loan.MaturityDay, currentDay),
                         status = i18n.Get("menu.loan.status." + loan.Status.ToString().ToLowerInvariant()),
-                        overdue = Math.Max(0, currentDay - loan.MaturityDay),
                         next = loan.Status == LoanStatus.Overdue
                             ? loan.LockedCollectionEnabled
-                                ? i18n.Get("menu.loan.next.collection", new { day = loan.CollectionStartDay })
+                                ? i18n.Get("menu.loan.next.collection", new { days = Math.Max(0, loan.CollectionStartDay - currentDay) })
                                 : i18n.Get("menu.loan.next.manual")
                             : loan.Status == LoanStatus.Collection
-                                ? i18n.Get("menu.loan.next.default", new { day = loan.DefaultDay })
+                                ? i18n.Get("menu.loan.next.default", new { days = Math.Max(0, loan.DefaultDay - currentDay) })
                                 : loan.Status == LoanStatus.Defaulted
                                     ? i18n.Get("menu.loan.next.continues")
-                                    : i18n.Get("menu.loan.next.maturity", new { day = loan.MaturityDay })
+                                    : ""
                     });
                 Utility.drawTextWithShadow(b, Game1.parseText(details, Game1.smallFont, leftWidth), Game1.smallFont, new Vector2(left, bodyTop + 170), Game1.textColor * 0.82f);
             }
@@ -525,6 +566,9 @@ namespace SimpleBank
 
         private void DrawActionButtons(SpriteBatch b)
         {
+            DrawButton(b, FindButton(LoanTermsId));
+            DrawButton(b, FindButton(LoanTermsPreviousId));
+            DrawButton(b, FindButton(LoanTermsNextId));
             DrawButton(b, FindButton(PrimaryId));
             DrawButton(b, FindButton(SecondaryId));
         }
@@ -639,9 +683,10 @@ namespace SimpleBank
             if (button == null || !button.Enabled) return;
 
             // A pending transaction is only confirmed through the focused
-            // confirmation button. Choosing anything else first abandons the
-            // pending transaction, then performs that newly chosen control.
-            if (awaitingConfirmation && id != PrimaryId && id != SecondaryId)
+            // confirmation button. Reading terms preserves the pending loan;
+            // other controls abandon it before changing transaction inputs.
+            if (awaitingConfirmation && id != PrimaryId && id != SecondaryId
+                && id != LoanTermsId && id != LoanTermsPreviousId && id != LoanTermsNextId)
             {
                 CancelConfirmation();
                 button = FindButton(id);
@@ -650,6 +695,16 @@ namespace SimpleBank
 
             currentlySnappedComponent = button.Component;
             Game1.playSound("smallSelect");
+            if (id == LoanTermsId)
+            {
+                loanTermsPage = loanTermsPage < 0 ? 0 : -1;
+                UpdateLayout(true);
+                if (diagnostics.Enabled)
+                    diagnostics.Log("atm-ui: loan-terms-toggled, playerId=" + farmer.UniqueMultiplayerID + ", visible=" + (loanTermsPage >= 0));
+                return;
+            }
+            if (id == LoanTermsPreviousId) { ChangeLoanTermsPage(-1); return; }
+            if (id == LoanTermsNextId) { ChangeLoanTermsPage(1); return; }
             if (id == CloseId) { HandleBack(); return; }
             if (id >= TabId && id < TabId + tabs.Length) { ChangeTab(id - TabId - tab); return; }
             if (id == ProductPreviousId) { ChangeProduct(-1); return; }
@@ -710,6 +765,7 @@ namespace SimpleBank
                 diagnostics.Log("atm-ui: action-selected, playerId=" + farmer.UniqueMultiplayerID + ", action=" + action + ", amount=" + amount + ", productIndex=" + GetSelectedProductIndex() + ", confirmationRequired=" + requiresConfirmation + ", revision=" + bank.State.Revision);
             pendingAction = action;
             awaitingConfirmation = requiresConfirmation;
+            loanTermsPage = -1;
             statusMessage = null;
             if (!requiresConfirmation) ConfirmOrExecute();
             UpdateLayout(true);
@@ -1058,18 +1114,55 @@ namespace SimpleBank
                         amount = FormatGold(amount),
                         days = product.Days,
                         rate = product.DailyRatePercent,
-                        grace = config.OverdueGraceDays,
-                        collection = i18n.Get(config.EnableOverdueCollection ? "menu.value.enabled" : "menu.value.disabled"),
-                        activeSetoff = i18n.Get(config.EnableActiveBalanceSetoff ? "menu.value.enabled" : "menu.value.disabled"),
-                        activeReserve = FormatGold(config.MinimumActiveBalanceReserve),
-                        walletReserve = FormatGold(config.MinimumWalletReserve),
-                        garnishment = config.IncomeGarnishmentPercent,
-                        cap = config.MaximumOverdueInterestPercent,
-                        defaultDays = config.DefaultAfterDays
+                        collection = i18n.Get(config.EnableOverdueCollection ? "menu.confirm.loan.collection" : "menu.confirm.loan.manual",
+                            new { grace = config.OverdueGraceDays })
                     });
                 }
             }
             return i18n.Get("menu.confirm.amount", new { action = i18n.Get("action." + pendingAction), amount });
+        }
+
+        private string[] GetLoanTermsPages()
+        {
+            var config = GetCachedConfig();
+            var text = i18n.Get("menu.loan.terms.details", new
+            {
+                collection = i18n.Get(config.EnableOverdueCollection ? "menu.value.enabled" : "menu.value.disabled"),
+                grace = config.OverdueGraceDays,
+                activeSetoff = i18n.Get(config.EnableActiveBalanceSetoff ? "menu.value.enabled" : "menu.value.disabled"),
+                activeReserve = FormatGold(config.MinimumActiveBalanceReserve),
+                walletReserve = FormatGold(config.MinimumWalletReserve),
+                garnishment = config.IncomeGarnishmentPercent,
+                multiplier = config.OverdueRateMultiplier,
+                cap = config.MaximumOverdueInterestPercent == 0
+                    ? i18n.Get("menu.loan.terms.uncapped")
+                    : i18n.Get("menu.loan.terms.cap", new { cap = config.MaximumOverdueInterestPercent }),
+                defaultDays = config.DefaultAfterDays
+            });
+            var lines = Game1.parseText(text, Game1.smallFont, width - 56).Split('\n');
+            var pages = new List<string>();
+            var page = "";
+            var availableHeight = height - 390;
+            foreach (var line in lines)
+            {
+                var candidate = page.Length == 0 ? line : page + "\n" + line;
+                if (page.Length > 0 && Game1.smallFont.MeasureString(candidate).Y > availableHeight)
+                {
+                    pages.Add(page);
+                    page = line;
+                }
+                else page = candidate;
+            }
+            pages.Add(page);
+            return pages.ToArray();
+        }
+
+        private void ChangeLoanTermsPage(int direction)
+        {
+            loanTermsPage = Math.Max(0, Math.Min(GetLoanTermsPages().Length - 1, loanTermsPage + direction));
+            UpdateLayout(true);
+            if (diagnostics.Enabled)
+                diagnostics.Log("atm-ui: loan-terms-page, playerId=" + farmer.UniqueMultiplayerID + ", page=" + loanTermsPage);
         }
 
         private bool IsActionAllowedDuringCollection(string action)
@@ -1184,7 +1277,8 @@ namespace SimpleBank
         private string FormatMaturity(int maturityDay, int currentDay)
         {
             var remaining = maturityDay - currentDay;
-            return remaining >= 0
+            if (remaining == 0) return i18n.Get("menu.maturity.today");
+            return remaining > 0
                 ? i18n.Get("menu.maturity.days", new { days = remaining })
                 : i18n.Get("menu.maturity.overdue", new { days = -remaining });
         }

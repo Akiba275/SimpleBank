@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -33,7 +34,11 @@ namespace StardewValley
 {
     public class SpriteFont
     {
-        public Vector2 MeasureString(string text) { return new Vector2(text.Length * 8, 16); }
+        public Vector2 MeasureString(string text)
+        {
+            var lines = text.Split('\n');
+            return new Vector2(lines.Max(line => line.Length) * 8, lines.Length * 16);
+        }
     }
 
     public class Options

@@ -1,6 +1,8 @@
-# Simple Bank — Beta 0.1.0
+# Simple Bank — Beta 0.1.1
 
 Simple Bank 是一个面向《星露谷物语》1.6 的 SMAPI 模组。它在村长家加入 ATM，并提供活期存款、定期存款、贷款、多人账户和可配置的银行参数。
+
+本版将定期和贷款的到期时间统一显示为“X 天后到期”，到期当天显示“今天到期”，逾期后显示“已逾期 X 天”。定期申请以两行摘要显示资金来源、金额、期限和日利率；贷款申请默认显示金额、期限、日利率与托收提示，完整条款可按需查看。
 
 ## 运行要求
 
@@ -12,7 +14,7 @@ Simple Bank 是一个面向《星露谷物语》1.6 的 SMAPI 模组。它在村
 
 ## 安装
 
-下载地址：[GitHub Beta 0.1.0](https://github.com/Akiba275/SimpleBank/releases/tag/0.1.0-beta) 或 [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/54796)。主包为 `SimpleBank-0.1.0-beta.zip`，欢迎信可选包为 `SimpleBank-MailFramework-0.1.0-beta.zip`；名称带 `source` 的 ZIP 是开发源码，不能直接安装为模组。
+本版源码为 Beta 0.1.1，尚未发布。已发布版本见 [GitHub 发行列表](https://github.com/Akiba275/SimpleBank/releases) 或 [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/54796)。本版构建后的主包为 `SimpleBank-0.1.1-beta.zip`，欢迎信可选包为 `SimpleBank-MailFramework-0.1.1-beta.zip`；名称带 `source` 的 ZIP 是开发源码，不能直接安装为模组。
 
 1. 解压主发行包到游戏的 `Mods` 目录。
 2. 确认最终目录中同时存在：
@@ -51,7 +53,7 @@ ATM 有四个页面：
 - 托收不会让钱包变为负数，也不没收物品、建筑或未到期定存。定存自然到期或主动提前支取的可用款项会先用于还款。
 - 银行交易不会增加游戏的历史总收益，也不会伪造收入成就进度。
 
-默认启用 5 个定期产品和 3 个贷款产品，也可在配置中启用更多产品。所有利率、期限、额度与产品开关都可调整。贷款的托收参数会在放款时锁入合同，之后修改 GMCM 只影响新贷款；ATM 确认页会在借款前展示完整条款。
+默认启用 5 个定期产品和 3 个贷款产品，也可在配置中启用更多产品。所有利率、期限、额度与产品开关都可调整。贷款的托收参数会在放款时锁入合同，之后修改 GMCM 只影响新贷款。贷款确认页默认显示摘要，选择“查看条款”可阅读完整规则；小窗口下可翻页。选择“返回摘要”或按返回键回到摘要，再次返回则取消申请。查看条款不会提交交易，只有选择“确认”才会申请贷款。
 
 ### 逾期与强制托收
 

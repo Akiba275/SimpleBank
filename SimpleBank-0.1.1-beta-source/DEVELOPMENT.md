@@ -1,6 +1,6 @@
 # Simple Bank 开发说明
 
-本文档描述 `0.1.0-beta` 的实际源码结构、构建入口、安全边界和后续开发约定。
+本文档描述 `0.1.1-beta` 的实际源码结构、构建入口、安全边界和后续开发约定。
 
 ## 项目结构
 
@@ -17,30 +17,33 @@
 
 ## 构建与测试
 
-在源码根目录运行：
+使用 .NET 10 LTS SDK 编译，主模组与测试项目的目标框架保持 `net6.0`。SDK 是编译工具；目标框架决定产物使用的 .NET 接口。游戏和 SMAPI 当前使用 .NET 6，升级 SDK 不应同时提高模组的目标框架。参见 [SMAPI 开发指南](https://stardewvalleywiki.com/Modding:Modder_Guide/Get_Started#What_does_%22target_NET_6.0%22_mean?) 和 [微软 SDK 版本说明](https://learn.microsoft.com/en-us/dotnet/core/versions/selection)。
+
+本机编译与生成实机测试包必须通过源码附带的 `build/build.ps1` 完成，以持续验证完整入口。在源码根目录运行：
+
+```powershell
+.\build\build.ps1 -GamePath 'C:\Path\To\Stardew Valley'
+```
+
+脚本兼容 Windows PowerShell 5.1 和 PowerShell 7，会依次执行静态校验、核心测试、GameHarness 测试、真实 SMAPI DLL 构建和主包/可选包打包。`GamePath` 指向装好 SMAPI 的完整游戏目录，也可通过 `STARDEW_VALLEY_PATH` 环境变量提供；保留游戏及 `smapi-internal` 中的依赖文件。没有有效游戏路径时，脚本只完成离线测试与可选包打包，并跳过真实主 DLL 和主安装包；脚本退出码为 0 不能单独证明完整编译成功。
+
+脚本优先使用 `PATH` 中的 `dotnet`，找不到时检查源码目录及其父目录下的 `.dotnet/dotnet.exe`。日志中的 `BUILD SDK` 显示实际选择的 SDK 与路径，应确认使用 .NET 10 LTS。新旧 SDK 可并存；保留 .NET 6 运行时可继续在对应运行时执行测试。首次还原依赖需要访问 NuGet，后续可复用缓存；脚本尊重 `NUGET_PACKAGES`，未设置时使用源码目录下的 `NuGet/packages`。
+
+如需仅运行静态校验或生成源码归档，可分别运行以下辅助脚本；它们不能替代完整构建入口：
 
 ```powershell
 .\scripts\validate.ps1
-.\build\build.ps1
-.\build\build.ps1 -GamePath 'C:\Path\To\Stardew Valley'
 .\build\package-source.ps1
 ```
 
-项目目标框架为 `net6.0`。没有游戏路径时，构建脚本会运行静态校验和核心测试、生成可选内容包，然后跳过真实 SMAPI DLL。提供同时包含 `Stardew Valley.dll` 与 `StardewModdingAPI.dll` 的游戏路径后，脚本才构建主 DLL 和主发行包。
-
-当前自包含测试入口：
-
-```powershell
-dotnet run --project src\SimpleBank.Core.Tests.csproj -c Release
-dotnet run --project src\SimpleBank.GameHarness.csproj -c Release
-```
+分析器是构建阶段运行的代码检查工具。使用旧 SDK 时出现 `CS9057` 表示分析器要求的编译器版本高于当前版本，不能视为分析器检查通过。较新 SDK 还可能针对已结束支持的 `net6.0` 可执行测试项目提示 `NETSDK1138`；该生命周期提示不等同于分析器加载失败，也不应通过修改模组目标框架来消除。验证时分别记录编译错误、分析器诊断和框架生命周期提示，并以真实游戏验收确认运行行为。
 
 发行包命名为：
 
 ```text
-SimpleBank-0.1.0-beta.zip
-SimpleBank-MailFramework-0.1.0-beta.zip
-SimpleBank-0.1.0-beta-source.zip
+SimpleBank-0.1.1-beta.zip
+SimpleBank-MailFramework-0.1.1-beta.zip
+SimpleBank-0.1.1-beta-source.zip
 ```
 
 ## 发布渠道
@@ -117,6 +120,12 @@ UpdateTicked（仅目标钱包整数余额增加时调用收入代扣）
 
 资金来源不持久化；到期和提前支取所得均进入活期账户。
 
+## ATM 到期时间与申请确认
+
+概览、定期详情和贷款详情共用 `FormatMaturity`，以合同到期日减去当前游戏日计算剩余天数；零天显示今天到期，负数显示已逾期天数。贷款详情仅显示一次到期情况，托收和违约提示同样使用剩余天数。此项只改变显示，不修改合同日期、业务规则或 schema。
+
+定期确认压缩为来源/金额与期限/日复利两行。贷款确认使用完整内容区显示金额、期限、日单利和托收摘要；“查看条款”展开当前配置对应的完整条款，按字体测量结果和可用高度分页。条款按钮、翻页与返回仅改变当前菜单的阅读状态，确认按钮仍走原有交易流程；编辑金额或切换产品会取消待确认交易。中英文资源保持相同键集合。
+
 ## 钱包模式
 
 `ModeMismatch` 是运行时的瞬态安全锁。它在游戏钱包拓扑与银行拓扑暂时不一致时阻止交易，并在切换成功或原版请求回滚后清除。
@@ -131,9 +140,9 @@ UpdateTicked（仅目标钱包整数余额增加时调用收入代扣）
 
 ## 兼容与版本策略
 
-GitHub 发布仓库为 `Akiba275/SimpleBank`，Nexus Mods 页面编号为 `54796`。主模组、CP 地图包和可选 MFM 包统一使用 `Nexus:54796` 与 `GitHub:Akiba275/SimpleBank` 更新键，应同步版本和发布。Release 标签使用机器版本（当前为 `0.1.0-beta`）。发布说明必须区分源码附件与可安装的主包，不得以离线测试程序集代替真实 SMAPI 构建。
+GitHub 发布仓库为 `Akiba275/SimpleBank`，Nexus Mods 页面编号为 `54796`。主模组、CP 地图包和可选 MFM 包统一使用 `Nexus:54796` 与 `GitHub:Akiba275/SimpleBank` 更新键，应同步版本和发布。Release 标签使用机器版本（当前为 `0.1.1-beta`）。发布说明必须区分源码附件与可安装的主包，不得以离线测试程序集代替真实 SMAPI 构建。
 
-机器版本遵循 SemVer。当前版本为 `0.1.0-beta`，玩家显示名称为 Beta 0.1.0。程序集版本由 SDK 从 `SimpleBank.csproj` 生成，不再维护独立的 `AssemblyInfo.cs`。
+机器版本遵循 SemVer。当前版本为 `0.1.1-beta`，玩家显示名称为 Beta 0.1.1。程序集版本由 SDK 从 `SimpleBank.csproj` 生成，不再维护独立的 `AssemblyInfo.cs`。
 
 支持的数据基线为 Beta 0.1.0。未知 schema 和无效状态会保留原数据并锁定写入。
 
@@ -157,4 +166,5 @@ ATM 菜单按银行 revision、配置 revision 和钱包计数缓存快照、排
 - 原版账本钱包模式切换在有未结清合同时被取消；清空合同后只迁移活期余额一次。
 - 贷款逾期通知按玩家和会话去重，且不依赖可选 MFM 包。
 - 在 `SaveLoaded → DayStarted`、断线重连、长期离线和其他模组改写钱包的场景检查托收检查点、保留额、单次共享钱包扣款及 `totalMoneyEarned` 不变。
-- 检查托收中的 ATM 限制、借款确认页完整条款、资金来源通知，以及 `simplebank_*` 主机命令的 `confirm` 二次确认和审计日志。
+- 检查到期前、到期当天和逾期后的中英文剩余天数显示；贷款确认页的摘要、完整条款翻页和返回操作在小窗口下应可读，查看条款不能提交交易，修改金额应取消旧确认。
+- 检查托收中的 ATM 限制、借款确认页按需展开的完整条款、资金来源通知，以及 `simplebank_*` 主机命令的 `confirm` 二次确认和审计日志。

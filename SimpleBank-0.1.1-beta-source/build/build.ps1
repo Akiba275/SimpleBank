@@ -27,6 +27,9 @@ if (!$dotnetPath) {
 if ($dotnetPath) {
   $sdks = @(& $dotnetPath --list-sdks)
   if ($LASTEXITCODE -eq 0 -and $sdks.Count -gt 0) {
+    $sdkVersion = & $dotnetPath --version
+    if ($LASTEXITCODE -ne 0) { throw 'Could not determine the selected .NET SDK version.' }
+    Write-Output "BUILD SDK: $sdkVersion ($dotnetPath); target framework: net6.0"
     & $dotnetPath build $testProject --configuration Release
     if ($LASTEXITCODE -ne 0) { throw 'Core test build failed.' }
     $testDll = Join-Path $projectRoot 'src\bin\Release\net6.0\SimpleBank.Core.Tests.dll'
@@ -70,7 +73,7 @@ if (!$msbuildPath) {
     if ($msbuildPath) { break }
   }
 }
-if (!$msbuildPath) { throw 'No .NET SDK or MSBuild installation was found. Install the .NET 6 SDK, then reopen PowerShell.' }
+if (!$msbuildPath) { throw 'No .NET SDK or MSBuild installation was found. Install the .NET 10 LTS SDK, then reopen PowerShell. Keep the project target framework at net6.0.' }
 & $msbuildPath $testProject /restore /p:Configuration=Release
 if ($LASTEXITCODE -ne 0) { throw 'Core test build failed.' }
 $testExe = Join-Path $projectRoot 'src\bin\Release\net6.0\SimpleBank.Core.Tests.exe'

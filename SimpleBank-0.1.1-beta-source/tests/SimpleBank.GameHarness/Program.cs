@@ -51,6 +51,8 @@ public static partial class Program
         TestSharedWalletUsesOneObserver();
         TestTermFundingMenu();
         TestTermFundingMultiplayer();
+        TestMaturityDisplay();
+        TestLoanConfirmationSummary();
 
         Console.WriteLine("PASS: " + passed + " game-layer lifecycle assertions; game layer compiled.");
         return 0;
