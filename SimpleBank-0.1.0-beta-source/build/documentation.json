@@ -2,8 +2,7 @@
   "Documents": {
     "PlayerGuide": "README.md",
     "DevelopmentGuide": "DEVELOPMENT.md",
-    "VerificationRecord": "VERIFICATION.md",
-    "ArchiveDirectory": "docs/archive"
+    "VerificationRecord": "VERIFICATION.md"
   },
   "PlayerPackage": [
     { "Source": "README.md", "Destination": "README.md" }
@@ -22,12 +21,14 @@
     "assets",
     "build",
     "content",
-    "docs",
     "i18n",
     "optional",
     "scripts",
     "src",
     "tests"
+  ],
+  "SourceExcludeFiles": [
+    "AGENTS.md"
   ],
   "SourceExcludeDirectories": [
     "bin",

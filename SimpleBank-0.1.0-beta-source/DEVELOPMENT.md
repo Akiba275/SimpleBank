@@ -1,6 +1,6 @@
 # Simple Bank 开发说明
 
-本文档描述 `0.1.0-beta` 的实际源码结构、构建入口、安全边界和后续开发约定。`docs/archive` 中的文件只保存历史背景，不再作为当前需求或实现依据。
+本文档描述 `0.1.0-beta` 的实际源码结构、构建入口、安全边界和后续开发约定。
 
 ## 项目结构
 
@@ -12,7 +12,6 @@
 - `optional/[MFM] Simple Bank Notice`：独立且可选的欢迎信内容包。
 - `scripts/validate.ps1`：JSON、版本、文档、地图、输入、本地化、代码边界和打包不变量检查。
 - `build`：构建与发行脚本；`documentation.json` 声明活动文档和源码包内容。
-- `docs/archive`：Beta 0.1.0 之前的历史 README、验证记录、交接记录、开发日志和初始提示词。
 
 测试辅助类型不得放入 `src/SimpleBank.Core`。发行项目使用 `src/SimpleBank.Core/*.cs` 通配编译，因此测试替身必须保留在 `tests` 中。
 
@@ -44,6 +43,23 @@ SimpleBank-MailFramework-0.1.0-beta.zip
 SimpleBank-0.1.0-beta-source.zip
 ```
 
+## 发布渠道
+
+- [GitHub 源码仓库](https://github.com/Akiba275/SimpleBank)与[发行列表](https://github.com/Akiba275/SimpleBank/releases)。
+- [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/54796)。
+
+主模组、CP 地图包与可选 MFM 欢迎信包的 `manifest.json` 均使用以下更新键，并保持版本同步：
+
+```json
+"UpdateKeys": [ "Nexus:54796", "GitHub:Akiba275/SimpleBank" ]
+```
+
+GitHub 标签使用机器版本号。GitHub 发布主包、可选欢迎信包、源码包及 `SHA256SUMS.txt`；Nexus 发布主包与可选欢迎信包。首页和两站发布说明保持完整中英对应，中文在前、英文在后。
+
+发布前通过 `build/build.ps1` 验证，并使用真实 Stardew Valley/SMAPI 引用构建主包。核对包内版本、更新键和目录布局，生成源码包及校验和。构建产物位于源码目录的 `bin/Release/`，不加入版本控制。
+
+后续代码更新使用新的机器版本和标签，保留已发布标签、ZIP 和校验和；仅修改文档时不替换已发布附件。
+
 ## 文档与打包约定
 
 活动文档的角色和路径由 `build/documentation.json` 声明：
@@ -51,7 +67,8 @@ SimpleBank-0.1.0-beta-source.zip
 - 玩家说明：随主发行包复制。
 - 开发说明：只进入源码包。
 - 验证记录：只进入源码包。
-- 历史归档：随源码包保留，但不参与当前行为判断。
+
+源码包仅包含清单指定的公开文件和目录，并按清单排除本地辅助文件与构建缓存。
 
 `package-release.ps1`、`package-source.ps1` 和 `validate.ps1` 都读取该清单。重命名或移动活动文档时，应修改清单，而不是在多个脚本中增加新的硬编码路径。
 
@@ -94,19 +111,19 @@ UpdateTicked（仅目标钱包整数余额增加时调用收入代扣）
 
 ## 定期资金来源
 
-定期资金来源由当前 `AtmMenu` 实例保存，每次打开默认钱包，切换页面不重置，分屏菜单互不共享该选择。钱包来源发送 `term`，活期来源发送 `term-active`；主机沿用身份、ATM 访问、revision 和重复交易检查，按账户模式定位资金，并在成功后先发送过滤快照再发送响应。新增操作名避免旧主机把不认识的活期来源误当成钱包扣款。
+定期资金来源由当前 `AtmMenu` 实例保存，每次打开默认钱包，切换页面不重置，分屏菜单互不共享该选择。钱包来源发送 `term`，活期来源发送 `term-active`；主机执行身份、ATM 访问、revision 和重复交易检查，按账户模式定位资金，并在成功后先发送过滤快照再发送响应。
 
 `CreateTermDeposit` 与 `CreateTermDepositFromActive` 共用 `PrepareTermDeposit`，统一产品开关、托收限制、存单数上限、定期总额溢出检查和合同字段锁定。活期来源通过 `MutateAccountState` 一次性扣减 `ActiveBalance` 并添加存单，失败恢复银行状态、revision 和交易 ID 历史，不调用钱包读写或回滚接口。没有个人账户时按活期余额不足拒绝，不创建空账户。`ActiveInterestRemainder` 留在原账户，新存单余数为零。
 
-资金来源不持久化；到期和提前支取继续进入活期，因此 `TermDeposit` 结构、schema 3 和存档迁移保持不变。此改动不涉及钱包模式迁移规则。
+资金来源不持久化；到期和提前支取所得均进入活期账户。
 
 ## 钱包模式
 
-`ModeMismatch` 是当前运行时的瞬态安全锁，不是旧版兼容字段。它在游戏钱包拓扑与银行拓扑暂时不一致时阻止交易，并在切换成功或原版请求回滚后清除。
+`ModeMismatch` 是运行时的瞬态安全锁。它在游戏钱包拓扑与银行拓扑暂时不一致时阻止交易，并在切换成功或原版请求回滚后清除。
 
 共享与独立钱包之间的当前迁移规则只移动活期余额及其利息余数。合并多个个人账户时，余数达到整金币的部分进入合并余额，其余部分继续保存。存在未结清定期或贷款时，预检和最终迁移都会拒绝切换。迁移在克隆状态上执行，完成校验后一次性提交。
 
-`BankState` 当前为 schema 3。schema 2 已为活期账户、定期存单和贷款合同加入 `[0, 1)` 范围的小数利息余数；schema 3 再加入贷款原始本金、锁定托收条款、代扣余数、阶段日期、日度检查点、解决信息和独立信用限制。`SaveRepository` 显式执行 `1 → 2 → 3`：第一步把余数初始化为零，第二步按载入时配置为内部开发贷款锁定托收条款。未知 schema 或无效结构仍保留原数据并锁定写入。
+`BankState` 当前为 schema 3，保存活期、定期和贷款的小数利息余数，以及贷款原始本金、锁定托收条款、代扣余数、阶段日期、日度检查点、解决信息和独立信用限制。`SaveRepository` 支持显式 `1 → 2 → 3` 结构迁移：第一步把利息余数初始化为零，第二步按载入时配置为已有贷款锁定托收条款。未知 schema 或无效结构会保留原数据并锁定写入。
 
 贷款日期固定为：`OverdueStartDay = MaturityDay + 1`、`CollectionStartDay = MaturityDay + GraceDays + 1`、`DefaultDay = CollectionStartDay + DefaultAfterDays`。逾期利息按剩余本金逐日计算，`OverdueInterestCharged` 保存累计精确逾期利息，使已偿还的利息不会重新打开上限空间；配置上限为 `0` 时表示不限额。
 
@@ -118,14 +135,9 @@ GitHub 发布仓库为 `Akiba275/SimpleBank`，Nexus Mods 页面编号为 `54796
 
 机器版本遵循 SemVer。当前版本为 `0.1.0-beta`，玩家显示名称为 Beta 0.1.0。程序集版本由 SDK 从 `SimpleBank.csproj` 生成，不再维护独立的 `AssemblyInfo.cs`。
 
-Beta 0.1.0 是唯一受支持的起点：
+支持的数据基线为 Beta 0.1.0。未知 schema 和无效状态会保留原数据并锁定写入。
 
-- 不读取 `EnabledTermProducts` 或 `EnabledLoanProducts` 等旧配置字段。
-- 不修复旧开发版本产生的“个人模式下共享账户仍有资产”形状。
-- 不为归档文档描述的旧行为保留分支、消息或测试。
-- 未知 schema 和无效状态仍执行保守锁定；这是数据安全策略，不是旧版本迁移。
-
-后续若改变持久化结构，应先增加 schema 版本并设计显式迁移；不得重新加入无期限的隐式兼容分支。
+后续若改变持久化结构，应先增加 schema 版本并设计显式迁移；不得加入无期限的隐式兼容分支。
 
 ## 性能与诊断
 

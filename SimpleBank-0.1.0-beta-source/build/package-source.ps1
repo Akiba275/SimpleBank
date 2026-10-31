@@ -32,6 +32,11 @@ foreach ($generatedDirectory in $generatedDirectories) {
   if (Test-Path -LiteralPath $resolved) { Remove-Item -LiteralPath $resolved -Recurse -Force }
 }
 
+$excludedFileNames = @($documentation.SourceExcludeFiles)
+Get-ChildItem -LiteralPath $sourceRoot -Recurse -File -Force |
+  Where-Object { $excludedFileNames -contains $_.Name } |
+  ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force }
+
 $zipPath = Join-Path $releaseDirectory ("SimpleBank-{0}-source.zip" -f $manifest.Version)
 if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
 Compress-Archive -LiteralPath $sourceRoot -DestinationPath $zipPath -CompressionLevel Optimal

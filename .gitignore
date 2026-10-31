@@ -14,3 +14,6 @@
 *.user
 *.suo
 
+# Local agent instructions are not part of the public repository.
+AGENTS.md
+

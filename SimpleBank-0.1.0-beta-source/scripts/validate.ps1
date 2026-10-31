@@ -232,8 +232,6 @@ foreach ($documentPath in $documentPaths) {
     throw "Declared active document is missing: $documentPath"
   }
 }
-$archivePath = Join-Path $Root $documentation.Documents.ArchiveDirectory
-if (!(Test-Path -LiteralPath $archivePath -PathType Container)) { throw 'Declared documentation archive is missing.' }
 $playerReadme = [IO.File]::ReadAllText((Join-Path $Root $documentation.Documents.PlayerGuide), [Text.UTF8Encoding]::new($false, $true))
 if ($playerReadme.Contains($documentation.Documents.VerificationRecord) -or $playerReadme.Contains('## Build and test')) { throw 'Player guide contains development-only material.' }
 $textExtensions = @('.cs', '.csproj', '.json', '.md', '.ps1', '.tmx', '.tsx')
