@@ -80,8 +80,8 @@ namespace SimpleBank.Core
         {
             if (products == null || products.Count < 10) errors.Add(kind + " product list must contain 10 slots.");
             if (products == null) return;
-            if (products.Take(10).Any(x => x == null)) errors.Add(kind + " product slots cannot be null.");
             var slots = products.Take(10).ToList();
+            if (slots.Any(x => x == null)) errors.Add(kind + " product slots cannot be null.");
             if (slots.Any(x => x == null || x.Days < 1 || x.Days > 1120 || x.DailyRatePercent < 0 || x.DailyRatePercent > maximumDailyRate))
                 errors.Add(kind + " products have invalid duration or rate.");
             if (slots.Where(x => x != null && x.Enabled).GroupBy(x => x.Days).Any(g => g.Count() > 1))

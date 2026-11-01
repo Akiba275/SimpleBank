@@ -120,8 +120,11 @@ namespace SimpleBank
             }
 
             var changed = false;
-            foreach (var playerId in new List<long>(pendingReconnectSweepIds))
-                changed |= TryRunPendingReconnectSweep(playerId, absoluteDay);
+            if (pendingReconnectSweepIds.Count > 0)
+            {
+                foreach (var playerId in new List<long>(pendingReconnectSweepIds))
+                    changed |= TryRunPendingReconnectSweep(playerId, absoluteDay);
+            }
             foreach (var pair in bindings)
             {
                 if (!collectionTargetIds.Contains(pair.Key)) continue;

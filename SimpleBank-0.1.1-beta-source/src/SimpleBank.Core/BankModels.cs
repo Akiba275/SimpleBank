@@ -141,6 +141,24 @@ namespace SimpleBank.Core
         public long PayableInterest { get { return checked(AccruedInterest + BankMath.RoundInterestRemainder(InterestRemainder)); } }
         public long TotalOwed { get { return checked(Principal + PayableInterest); } }
         public LoanContract Clone() { return (LoanContract)MemberwiseClone(); }
+
+        // Callers handle settled/cancelled loans before deriving an open loan's phase.
+        internal LoanStatus GetOpenStatusForDay(int day)
+        {
+            if (day <= MaturityDay) return LoanStatus.Current;
+            if (!LockedCollectionEnabled || day < CollectionStartDay) return LoanStatus.Overdue;
+            return day >= DefaultDay ? LoanStatus.Defaulted : LoanStatus.Collection;
+        }
+    }
+
+    // A successful settlement receipt, never part of persisted BankState.
+    public sealed class TermMaturity
+    {
+        // Null identifies a shared-account deposit; otherwise this is the stable owner ID.
+        public long? PlayerId { get; set; }
+        public string DepositId { get; set; }
+        public int Day { get; set; }
+        public long Amount { get; set; }
     }
 
     public sealed class TransactionResult
@@ -164,6 +182,7 @@ namespace SimpleBank.Core
         public long InterestPaid { get; set; }
         public long PrincipalPaid { get; set; }
         public long RemainingDebt { get; set; }
+        public List<TermMaturity> TermMaturities { get; set; } = new List<TermMaturity>();
         public static TransactionResult Applied(string message, long revision) { return new TransactionResult { Status = TransactionStatus.Applied, Message = message, NewRevision = revision }; }
         public static TransactionResult Rejected(string message, long revision) { return new TransactionResult { Status = TransactionStatus.Rejected, Message = message, NewRevision = revision }; }
     }
@@ -395,16 +414,9 @@ namespace SimpleBank.Core
                 {
                     loan.ResolvedDay = null;
                     loan.Resolution = LoanResolutionKind.None;
-                    loan.Status = StatusForDay(loan, absoluteDay);
+                    loan.Status = loan.GetOpenStatusForDay(absoluteDay);
                 }
             }
-        }
-
-        private static LoanStatus StatusForDay(LoanContract loan, int day)
-        {
-            if (day <= loan.MaturityDay) return LoanStatus.Current;
-            if (!loan.LockedCollectionEnabled || day < loan.CollectionStartDay) return LoanStatus.Overdue;
-            return day >= loan.DefaultDay ? LoanStatus.Defaulted : LoanStatus.Collection;
         }
 
         private static int SaturatingDay(long day)

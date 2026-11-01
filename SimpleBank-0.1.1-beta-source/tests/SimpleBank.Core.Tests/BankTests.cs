@@ -17,6 +17,7 @@ public static partial class BankTests
         TestDefaultRates();
         TestWalletProtectionAndIdempotency();
         TestDailySettlementAndCatchup();
+        TestTermMaturityReceipts();
         TestFractionalInterestRemainders();
         TestTermEarlyWithdrawal();
         TestActiveTermFunding();
@@ -42,6 +43,8 @@ public static partial class BankTests
         TestConfigValidationAndHotReload();
         TestContractIdsAfterReload();
         TestMalformedStateSafety();
+        TestStateEntryValidation();
+        TestLoanPhaseEntryBoundaries();
         TestInterestRemainderSchemaMigration();
         TestInvalidAndOverflowInputs();
         TestSecurityAndGrowthLimits();

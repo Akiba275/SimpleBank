@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using StardewModdingAPI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
@@ -8,6 +9,74 @@ using SimpleBank.Core;
 
 public static partial class Program
 {
+    private static void TestOverviewRefresh()
+    {
+        foreach (var personal in new[] { false, true })
+        foreach (var locale in new[] { "zh", "default" })
+        {
+            var f = new FundingFixture(personal, locale);
+            var menu = f.OpenHostMenu();
+            AssertOverviewTerms(menu, f.Text, 0, 0, null);
+            TransactionResult result;
+            f.HostCoordinator.TryExecuteOrRequest(f.Host, "term-active", 2000, 1, 10, "long-term", out result);
+            Assert(result.Status == TransactionStatus.Applied, "overview fixture opens a fourteen-day deposit");
+            AssertOverviewTerms(menu, f.Text, 1, 2000, 14);
+            f.HostCoordinator.TryExecuteOrRequest(f.Host, "term-active", 1000, 0, 10, "short-term", out result);
+            Assert(result.Status == TransactionStatus.Applied, "overview fixture adds an earlier deposit after the cache is populated");
+            AssertOverviewTerms(menu, f.Text, 2, 3000, 7);
+            Game1.stats.DaysPlayed = 11;
+            AssertOverviewTerms(menu, f.Text, 2, 3000, 6);
+            var shortId = f.Bank.GetAccount(101).TermDeposits.Single(d => d.TermDays == 7).Id;
+            f.HostCoordinator.TryExecuteEarlyWithdrawal(f.Host, shortId, 11, "early", out result);
+            Assert(result.Status == TransactionStatus.Applied, "overview fixture closes the nearest deposit through the transaction coordinator");
+            AssertOverviewTerms(menu, f.Text, 1, 2000, 13);
+            Game1.stats.DaysPlayed = 24;
+            Assert(f.Bank.SettleToDay(24, "mature", f.Bank.State.Revision).Status == TransactionStatus.Applied,
+                "overview fixture settles the remaining deposit naturally");
+            f.HostCoordinator.PublishStateChanged();
+            AssertOverviewTerms(menu, f.Text, 0, 0, null);
+            menu.exitThisMenu();
+
+            // A same-revision first snapshot must replace any locally cached placeholder data.
+            f.HostCoordinator.TryExecuteOrRequest(f.Remote, "term-active", 1000, 1, 24, "remote-term", out result);
+            Assert(result.Status == TransactionStatus.Applied, "snapshot fixture opens a deposit belonging to the recipient");
+            var placeholder = f.Bank.State.Clone();
+            if (personal) placeholder.PersonalAccounts[202].TermDeposits.Clear();
+            else placeholder.SharedAccount.TermDeposits.Clear();
+            var clientBank = new BankService(f.Bank.Config, placeholder);
+            var client = new MultiplayerCoordinator(new FundingHelper(f.Text), f.Monitor, f.Diagnostics);
+            f.UseClient();
+            client.Attach(clientBank);
+            var clientMenu = new AtmMenu(clientBank, client, f.Remote, f.Text, new InputConfig(), f.Diagnostics);
+            Game1.activeClickableMenu = clientMenu;
+            AssertOverviewTerms(clientMenu, f.Text, 0, 0, null);
+            var revision = clientBank.State.Revision;
+            f.UseHost();
+            f.HostCoordinator.SendSnapshotTo(202);
+            var message = f.HostWire.Messages.Last();
+            f.UseClient();
+            DeliverFundingMessage(client, 101, message);
+            Assert(clientBank.State.Revision == revision, "initial host snapshot can refresh data without advancing revision");
+            AssertOverviewTerms(clientMenu, f.Text, 1, 1000, 14);
+            clientMenu.exitThisMenu();
+            client.Detach();
+            f.UseHost();
+        }
+        Context.ScreenId = 0;
+        Context.IsMainPlayer = true;
+    }
+
+    private static void AssertOverviewTerms(AtmMenu menu, FundingTranslations text, int count, long total, int? days)
+    {
+        var expected = text.Get("menu.overview.term-line", new
+        {
+            count,
+            total = total.ToString("N0") + "g",
+            due = days.HasValue ? text.Get("menu.maturity.days", new { days = days.Value }) : text.Get("menu.maturity.none")
+        });
+        Assert(DrawnFundingText(menu).Contains(expected), "overview displays the current count, balance and nearest maturity: " + expected);
+    }
+
     private static void TestMaturityDisplay()
     {
         foreach (var locale in new[] { "zh", "default" })

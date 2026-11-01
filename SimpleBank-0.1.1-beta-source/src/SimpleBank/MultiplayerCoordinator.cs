@@ -25,6 +25,8 @@ namespace SimpleBank
         private long localPlayerId;
         private long masterPlayerId;
         private bool restoringGameWalletMode;
+        private readonly List<TermMaturity> termMaturities = new List<TermMaturity>();
+        public long LocalPlayerId { get { return localPlayerId; } }
         public event Action<BankResponse> ResponseReceived;
         public event Action BankStateChanged;
         public event Action AtmAvailabilityChanged;
@@ -40,6 +42,7 @@ namespace SimpleBank
         public void Attach(BankService bank)
         {
             this.bank = bank;
+            termMaturities.Clear();
             this.isAuthoritativeHost = Context.IsMainPlayer;
             this.localPlayerId = Game1.player == null ? 0 : Game1.player.UniqueMultiplayerID;
             this.masterPlayerId = Game1.MasterPlayer == null ? 0 : Game1.MasterPlayer.UniqueMultiplayerID;
@@ -66,6 +69,7 @@ namespace SimpleBank
             masterPlayerId = 0;
             transactionLimiter.Clear();
             syncLimiter.Clear();
+            termMaturities.Clear();
         }
 
         public void ForgetPeer(long playerId)
@@ -226,6 +230,22 @@ namespace SimpleBank
                             }
                         }
                         bank.ReplaceState(sync.State);
+                        termMaturities.Clear();
+                        if (sync.TermMaturities != null)
+                        {
+                            foreach (var receipt in sync.TermMaturities)
+                            {
+                                if (receipt == null || string.IsNullOrWhiteSpace(receipt.DepositId)
+                                    || receipt.DepositId.Length > 128 || receipt.Amount <= 0
+                                    || receipt.Day != sync.State.LastSettlementDay
+                                    || (receipt.PlayerId.HasValue && receipt.PlayerId != localPlayerId))
+                                {
+                                    monitor.Log("Rejected an invalid term maturity receipt for player " + localPlayerId + ".", LogLevel.Warn);
+                                    continue;
+                                }
+                                termMaturities.Add(receipt);
+                            }
+                        }
                         if (diagnostics.Enabled)
                             diagnostics.Log("multiplayer-sync: applied, screenId=" + Context.ScreenId
                                 + ", localPlayerId=" + localPlayerId
@@ -273,6 +293,27 @@ namespace SimpleBank
             NotifyBankStateChanged();
         }
 
+        public void RecordTermMaturities(TransactionResult result, int day)
+        {
+            if (!isAuthoritativeHost || bank == null || result == null || result.Status != TransactionStatus.Applied) return;
+            termMaturities.RemoveAll(receipt => receipt.Day != day);
+            foreach (var receipt in result.TermMaturities)
+            {
+                if (receipt.Day == day && !termMaturities.Any(existing => existing.DepositId == receipt.DepositId && existing.PlayerId == receipt.PlayerId))
+                    termMaturities.Add(receipt);
+            }
+        }
+
+        public IEnumerable<TermMaturity> GetLocalTermMaturities(int day)
+        {
+            return GetTermMaturities(localPlayerId, day);
+        }
+
+        private IEnumerable<TermMaturity> GetTermMaturities(long playerId, int day)
+        {
+            return termMaturities.Where(receipt => receipt.Day == day && (!receipt.PlayerId.HasValue || receipt.PlayerId == playerId));
+        }
+
         public void PublishCollectionNotice(long playerId, string operation, TransactionResult result)
         {
             if (bank == null || !Context.IsMainPlayer || result == null) return;
@@ -294,7 +335,11 @@ namespace SimpleBank
         {
             if (diagnostics.Enabled)
                 diagnostics.Log("multiplayer-sync: snapshot-sent, screenId=" + Context.ScreenId + ", playerId=" + playerId + ", mode=" + bank.State.WalletMode + ", revision=" + bank.State.Revision);
-            helper.Multiplayer.SendMessage(new BankSyncMessage { State = CreateClientState(playerId), Config = configSnapshot }, SyncMessage, new[] { ModEntry.UniqueId }, new[] { playerId });
+            helper.Multiplayer.SendMessage(new BankSyncMessage
+            {
+                State = CreateClientState(playerId), Config = configSnapshot,
+                TermMaturities = GetTermMaturities(playerId, (int)Game1.stats.DaysPlayed).ToList()
+            }, SyncMessage, new[] { ModEntry.UniqueId }, new[] { playerId });
         }
 
         private BankState CreateClientState(long playerId)
@@ -557,6 +602,7 @@ namespace SimpleBank
     {
         public BankState State { get; set; }
         public BankConfig Config { get; set; }
+        public List<TermMaturity> TermMaturities { get; set; } = new List<TermMaturity>();
     }
 
     internal sealed class CollectionNotice

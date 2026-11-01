@@ -360,7 +360,7 @@ namespace SimpleBank
                 i18n.Get("menu.summary.term"),
                 i18n.Get("menu.summary.loan")
             };
-            var loanTotal = snapshot.LoanPrincipal > long.MaxValue - snapshot.LoanInterest ? long.MaxValue : snapshot.LoanPrincipal + snapshot.LoanInterest;
+            var loanTotal = SaturatingAdd(snapshot.LoanPrincipal, snapshot.LoanInterest);
             var values = new[] { snapshot.WalletBalance, snapshot.ActiveBalance, snapshot.TermBalance, loanTotal };
             var strip = new Rectangle(xPositionOnScreen + 28, yPositionOnScreen + 116, width - 56, 82);
             DrawPanel(b, strip, new Color(255, 248, 218), new Color(126, 79, 42));
@@ -371,7 +371,8 @@ namespace SimpleBank
                 if (i > 0)
                     b.Draw(Game1.staminaRect, new Rectangle(rect.X, rect.Y + 12, 2, rect.Height - 24), new Color(126, 79, 42) * 0.45f);
                 DrawIcon(b, (IconKind)(i + 1), new Rectangle(rect.X + 10, rect.Y + 12, 24, 24), new Color(71, 80, 84));
-                Utility.drawTextWithShadow(b, labels[i], Game1.smallFont, new Vector2(rect.X + 40, rect.Y + 9), Game1.textColor * 0.75f);
+                var labelScale = Math.Min(1f, (rect.Width - 52) / Math.Max(1f, Game1.smallFont.MeasureString(labels[i]).X));
+                Utility.drawTextWithShadow(b, labels[i], Game1.smallFont, new Vector2(rect.X + 40, rect.Y + 9), Game1.textColor * 0.75f, labelScale);
                 Utility.drawTextWithShadow(b, FormatGold(values[i]), Game1.smallFont, new Vector2(rect.X + 12, rect.Y + 46), Game1.textColor);
             }
         }
@@ -513,8 +514,8 @@ namespace SimpleBank
                 : bank.State.ModeMismatch ? "menu.account.status.mismatch" : "menu.account.status.normal");
             var currentDay = (int)Game1.stats.DaysPlayed;
             var account = bank.GetAccount(farmer.UniqueMultiplayerID);
-            var deposits = account.TermDeposits.Where(x => x != null).ToArray();
-            var nearestDeposit = deposits.OrderBy(x => x.MaturityDay).FirstOrDefault();
+            var deposits = GetTermDeposits();
+            var nearestDeposit = deposits.Length == 0 ? null : deposits[0];
             var openLoan = account.Loan != null && account.Loan.Status != LoanStatus.Settled && account.Loan.Status != LoanStatus.Cancelled ? account.Loan : null;
             var details = new[]
             {

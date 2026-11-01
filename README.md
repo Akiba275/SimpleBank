@@ -6,6 +6,8 @@
 
 本版将定期和贷款的到期时间改为“X 天后到期”，并简化申请确认内容。贷款确认页可选择“查看条款”阅读完整规则。
 
+定期和贷款到期当天会弹出游戏内提示：定期显示到期笔数及已转入活期的本息总额；贷款显示待还本金与利息，并提醒次日逾期。同一次游戏会话中不会重复提醒同一笔业务，支持共享与独立账户，无需 MFM。
+
 ### 模组介绍
 
 Simple Bank 是面向《星露谷物语》1.6 的银行模组。在村长家使用 ATM，即可管理活期存款、定期存款和贷款。模组提供简体中文与英文文本。
@@ -71,6 +73,8 @@ ATM 位于村长家墙面上的 (14,8)–(15,9) 格。站在相邻位置，面�
 The current source version is **Beta 0.1.1**, not yet published. The filenames below apply to this build; see the downloads list for published versions.
 
 This update displays term and loan maturity as “due in X days” and simplifies application confirmations. Select “View terms” on the loan confirmation to read the full rules.
+
+In-game popups now appear on the maturity day. Term deposits show the number matured and the total principal and interest transferred to savings; loans show the outstanding principal and interest and warn that they become overdue tomorrow. Each contract is notified once per game session, with support for shared and individual accounts and no MFM requirement.
 
 ### About the mod
 

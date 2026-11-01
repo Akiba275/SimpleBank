@@ -52,6 +52,7 @@ namespace SimpleBank
                     CurrentScreen.Multiplayer = new MultiplayerCoordinator(Helper, Monitor, diagnostics);
                     CurrentScreen.Multiplayer.AtmAvailabilityChanged += QueueAtmRefresh;
                     CurrentScreen.Multiplayer.BankStateChanged += CheckLoanOverdueNotification;
+                    CurrentScreen.Multiplayer.BankStateChanged += CheckMaturityNotifications;
                     CurrentScreen.Multiplayer.CollectionNoticeReceived += ShowCollectionNotice;
                 }
                 return CurrentScreen.Multiplayer;
@@ -288,6 +289,7 @@ namespace SimpleBank
             AttachWalletModeGuard();
             EnsureWalletModeAndPersist();
             CheckLoanOverdueNotification();
+            CheckMaturityNotifications();
             multiplayer.BroadcastSnapshot();
             QueueAtmRefresh("save-loaded");
             if (diagnostics.Enabled)
@@ -296,6 +298,7 @@ namespace SimpleBank
 
         private void OnDayStarted(object sender, DayStartedEventArgs e)
         {
+            if (!Context.IsMainPlayer) CheckMaturityNotifications();
             if (!Context.IsMainPlayer || bank == null) return;
             if (!EnsureWalletModeAndPersist())
             {
@@ -319,10 +322,21 @@ namespace SimpleBank
             if (result.Status == TransactionStatus.Rejected) Monitor.Log(i18n.Get("error.settlement", new { message = i18n.Get("error." + result.Message) }), LogLevel.Error);
             else
             {
+                multiplayer.RecordTermMaturities(result, day);
                 if (collection.OnDayStarted(day)) multiplayer.PublishStateChanged();
                 CheckLoanOverdueNotification();
+                CheckMaturityNotifications();
             }
             multiplayer.BroadcastSnapshot();
+        }
+
+        private void CheckMaturityNotifications()
+        {
+            if (!Context.IsWorldReady || bank == null || Game1.player == null) return;
+            if (CurrentScreen.MaturityNotifier == null)
+                CurrentScreen.MaturityNotifier = new MaturityNotifier(i18n, diagnostics);
+            var day = (int)Game1.stats.DaysPlayed;
+            CurrentScreen.MaturityNotifier.Check(bank, multiplayer.LocalPlayerId, day, multiplayer.GetLocalTermMaturities(day));
         }
 
         private void CheckLoanOverdueNotification()
@@ -407,7 +421,6 @@ namespace SimpleBank
             if ((result.StateChanged || result.Status != TransactionStatus.Applied) && save.CanWrite)
                 save.Write(bank.State);
             if (result.Status == TransactionStatus.Applied) return true;
-            if (save.CanWrite) save.Write(bank.State);
             ShowWalletModeRejection(result);
             Monitor.Log(i18n.Get("error.wallet-mode-mismatch") + " [" + result.Message + "]", LogLevel.Error);
             return false;
@@ -421,6 +434,8 @@ namespace SimpleBank
             if (CurrentScreen.Collection != null) CurrentScreen.Collection.Detach();
             bank = null;
             CurrentScreen.NotifiedOverdueLoanIds.Clear();
+            if (CurrentScreen.MaturityNotifier != null) CurrentScreen.MaturityNotifier.Reset();
+            CurrentScreen.NotificationCheckTicks = 0;
             warnedAtmMarkerMissing = false;
             pendingAtmRefresh = false;
             atmMarkerRetryTicks = 0;
@@ -749,6 +764,11 @@ namespace SimpleBank
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (++CurrentScreen.NotificationCheckTicks >= 60)
+            {
+                CurrentScreen.NotificationCheckTicks = 0;
+                CheckMaturityNotifications();
+            }
             if (Context.IsWorldReady && Context.IsMainPlayer && bank != null)
                 collection.UpdateTicked((int)Game1.stats.DaysPlayed);
             var measureAtmUpdate = diagnostics.Enabled && Context.IsWorldReady && Game1.currentLocation != null
@@ -1082,6 +1102,8 @@ namespace SimpleBank
             public BankService Bank;
             public MultiplayerCoordinator Multiplayer;
             public OverdueCollectionCoordinator Collection;
+            public MaturityNotifier MaturityNotifier;
+            public int NotificationCheckTicks;
             public bool WarnedAtmMarkerMissing;
             public bool PendingAtmRefresh;
             public int AtmMarkerRetryTicks;

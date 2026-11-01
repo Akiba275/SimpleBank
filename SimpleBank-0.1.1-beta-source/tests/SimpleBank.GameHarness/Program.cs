@@ -52,7 +52,10 @@ public static partial class Program
         TestTermFundingMenu();
         TestTermFundingMultiplayer();
         TestMaturityDisplay();
+        TestOverviewRefresh();
+        TestWalletModePersistence();
         TestLoanConfirmationSummary();
+        TestMaturityNotifications();
 
         Console.WriteLine("PASS: " + passed + " game-layer lifecycle assertions; game layer compiled.");
         return 0;

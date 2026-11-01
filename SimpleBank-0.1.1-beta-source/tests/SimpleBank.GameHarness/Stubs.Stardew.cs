@@ -49,7 +49,10 @@ namespace StardewValley
     public class HUDMessage
     {
         public static int error_type = 3;
-        public HUDMessage(string message, int type) { }
+        public static int newQuest_type = 2;
+        public string Message { get; }
+        public int Type { get; }
+        public HUDMessage(string message, int type) { Message = message; Type = type; }
     }
 
     public class TemporaryAnimatedSprite
@@ -137,7 +140,8 @@ namespace StardewValley
         }
         public static GameLocation getLocationFromName(string name) { return currentLocation; }
         public static void drawObjectDialogue(string message) { }
-        public static void addHUDMessage(HUDMessage message) { }
+        public static List<HUDMessage> HudMessages { get; } = new List<HUDMessage>();
+        public static void addHUDMessage(HUDMessage message) { HudMessages.Add(message); }
         public static void playSound(string cueName) { }
         public static string parseText(string text, SpriteFont font, int width) { return text; }
     }
@@ -150,7 +154,7 @@ namespace StardewValley
             public Vector2 Position;
         }
         public static List<DrawnText> DrawnTexts { get; } = new List<DrawnText>();
-        public static void drawTextWithShadow(SpriteBatch b, string text, SpriteFont font, Vector2 position, Color color)
+        public static void drawTextWithShadow(SpriteBatch b, string text, SpriteFont font, Vector2 position, Color color, float scale = 1f)
         {
             DrawnTexts.Add(new DrawnText { Text = text, Position = position });
         }

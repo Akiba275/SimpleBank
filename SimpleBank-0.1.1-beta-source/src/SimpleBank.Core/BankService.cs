@@ -27,7 +27,6 @@ namespace SimpleBank.Core
             this.diagnosticLog = diagnosticLog;
             var stateErrors = BankStateValidator.Validate(State);
             if (stateErrors.Count > 0) throw new ArgumentException("Invalid bank state: " + string.Join("; ", stateErrors));
-            NormalizeState(State);
             if (DiagnosticsEnabled)
                 Trace("core-init: mode=" + State.WalletMode + ", revision=" + State.Revision + ", dataInvalid=" + State.DataInvalid);
         }
@@ -102,7 +101,7 @@ namespace SimpleBank.Core
         {
             if (DiagnosticsEnabled)
                 Trace("core-transaction: begin, operation=term-active, playerId=" + playerId + ", amount=" + amount + ", transactionId=" + transactionId + ", expectedRevision=" + expectedRevision);
-            var result = MutateAccountState("term-active", playerId, transactionId, expectedRevision, delegate(Account account) {
+            var result = MutateAccountState(playerId, transactionId, expectedRevision, delegate(Account account) {
                 var deposit = PrepareTermDeposit(account, productIndex, amount, absoluteDay);
                 if (amount > account.ActiveBalance) throw new BankOperationException("active-insufficient");
                 account.ActiveBalance -= amount;
@@ -212,7 +211,7 @@ namespace SimpleBank.Core
 
         public TransactionResult CollectScheduledPayment(long playerId, IWalletAdapter wallet, int absoluteDay, bool checkActiveBalance, bool checkWallet, string transactionId, long expectedRevision)
         {
-            return MutateCollection("scheduled-collection", playerId, wallet, transactionId, expectedRevision, delegate(Account account) {
+            return MutateCollection(playerId, wallet, transactionId, expectedRevision, delegate(Account account) {
                 var loan = account.Loan;
                 if (!IsCollectionEligible(loan, absoluteDay)) throw new BankOperationException("loan-not-in-collection");
                 var result = new CollectionMutation { Message = "scheduled-collection-applied" };
@@ -258,7 +257,7 @@ namespace SimpleBank.Core
 
         public TransactionResult CollectIncomeGarnishment(long playerId, IWalletAdapter wallet, long positiveIncomeDelta, int absoluteDay, string transactionId, long expectedRevision)
         {
-            return MutateCollection("income-garnishment", playerId, wallet, transactionId, expectedRevision, delegate(Account account) {
+            return MutateCollection(playerId, wallet, transactionId, expectedRevision, delegate(Account account) {
                 if (wallet == null) throw new BankOperationException("wallet-unavailable");
                 if (positiveIncomeDelta <= 0) throw new BankOperationException("income-delta-not-positive");
                 var loan = account.Loan;
@@ -286,7 +285,7 @@ namespace SimpleBank.Core
 
         public TransactionResult CancelDebt(long playerId, int absoluteDay, string transactionId, long expectedRevision)
         {
-            return MutateAccountState("cancel-debt", playerId, transactionId, expectedRevision, delegate(Account account) {
+            return MutateAccountState(playerId, transactionId, expectedRevision, delegate(Account account) {
                 if (!IsOpenLoan(account.Loan)) throw new BankOperationException("loan-not-found");
                 account.Loan.Principal = 0;
                 account.Loan.AccruedInterest = 0;
@@ -301,7 +300,7 @@ namespace SimpleBank.Core
 
         public TransactionResult SetCreditRestriction(long playerId, CreditRestrictionMode mode, int? untilDay, string transactionId, long expectedRevision)
         {
-            return MutateAccountState("set-credit-restriction", playerId, transactionId, expectedRevision, delegate(Account account) {
+            return MutateAccountState(playerId, transactionId, expectedRevision, delegate(Account account) {
                 if (mode == CreditRestrictionMode.None) throw new BankOperationException("credit-restriction-invalid");
                 if (mode == CreditRestrictionMode.UntilDay && (!untilDay.HasValue || untilDay.Value < 0)) throw new BankOperationException("credit-restriction-date-invalid");
                 if (mode == CreditRestrictionMode.Permanent && untilDay.HasValue) throw new BankOperationException("credit-restriction-date-invalid");
@@ -312,7 +311,7 @@ namespace SimpleBank.Core
 
         public TransactionResult ClearCreditRestriction(long playerId, string transactionId, long expectedRevision)
         {
-            return MutateAccountState("clear-credit-restriction", playerId, transactionId, expectedRevision, delegate(Account account) {
+            return MutateAccountState(playerId, transactionId, expectedRevision, delegate(Account account) {
                 account.CreditRestriction = new CreditRestriction();
                 return "credit-restriction-cleared";
             });
@@ -335,11 +334,13 @@ namespace SimpleBank.Core
                 {
                     var from = State.LastSettlementDay.HasValue ? State.LastSettlementDay.Value + 1 : absoluteDay;
                     if (State.LastSettlementDay.HasValue && absoluteDay < State.LastSettlementDay.Value) throw new BankOperationException("date-before-last-settlement");
-                    for (var day = from; day <= absoluteDay; day++) SettleOneDay(day);
+                    var termMaturities = new List<TermMaturity>();
+                    for (var day = from; day <= absoluteDay; day++) SettleOneDay(day, termMaturities);
                     State.LastSettlementDay = absoluteDay;
                     MarkProcessed(transactionId);
                     State.Revision = checked(State.Revision + 1);
                     var applied = TransactionResult.Applied("settlement-applied", State.Revision);
+                    applied.TermMaturities = termMaturities;
                     if (DiagnosticsEnabled)
                         Trace("core-settlement: applied, targetDay=" + absoluteDay + ", daysProcessed=" + (absoluteDay - from + 1) + ", revision=" + State.Revision + ", before=" + DescribeState(before) + ", after=" + DescribeState(State));
                     return applied;
@@ -360,9 +361,9 @@ namespace SimpleBank.Core
             if (wallet == null) throw new ArgumentNullException("wallet");
             lock (sync)
             {
-                var account = State.WalletMode == WalletMode.Shared
-                    ? State.SharedAccount
-                    : State.PersonalAccounts.ContainsKey(playerId) ? State.PersonalAccounts[playerId] : new Account { Id = "player-" + playerId };
+                Account account;
+                if (State.WalletMode == WalletMode.Shared) account = State.SharedAccount;
+                else if (!State.PersonalAccounts.TryGetValue(playerId, out account)) account = new Account { Id = "player-" + playerId };
                 var snapshot = new BankSnapshot
                 {
                     WalletBalance = wallet.Balance, ActiveBalance = account.ActiveBalance,
@@ -385,7 +386,6 @@ namespace SimpleBank.Core
             lock (sync)
             {
                 State = state.Clone();
-                NormalizeState(State);
                 if (DiagnosticsEnabled)
                     Trace("core-state: replaced, mode=" + State.WalletMode + ", revision=" + State.Revision + ", personalAccounts=" + State.PersonalAccounts.Count);
             }
@@ -692,30 +692,6 @@ namespace SimpleBank.Core
             return IsOpenLoan(account.Loan);
         }
 
-        private static void NormalizeState(BankState state)
-        {
-            if (state.SharedAccount == null) state.SharedAccount = new Account { Id = "shared" };
-            NormalizeAccount(state.SharedAccount, "shared");
-            if (state.PersonalAccounts == null) state.PersonalAccounts = new Dictionary<long, Account>();
-            foreach (var playerId in state.PersonalAccounts.Keys.ToList())
-            {
-                if (state.PersonalAccounts[playerId] == null) state.PersonalAccounts[playerId] = new Account { Id = "player-" + playerId };
-                NormalizeAccount(state.PersonalAccounts[playerId], "player-" + playerId);
-            }
-            if (state.ProcessedTransactionIds == null) state.ProcessedTransactionIds = new List<string>();
-            state.ProcessedTransactionIds.RemoveAll(string.IsNullOrWhiteSpace);
-            if (state.ProcessedTransactionIds.Count > 256)
-                state.ProcessedTransactionIds.RemoveRange(0, state.ProcessedTransactionIds.Count - 256);
-        }
-
-        private static void NormalizeAccount(Account account, string fallbackId)
-        {
-            if (string.IsNullOrWhiteSpace(account.Id)) account.Id = fallbackId;
-            if (account.TermDeposits == null) account.TermDeposits = new List<TermDeposit>();
-            account.TermDeposits.RemoveAll(x => x == null || string.IsNullOrWhiteSpace(x.Id));
-            if (account.CreditRestriction == null) account.CreditRestriction = new CreditRestriction();
-        }
-
         private TransactionResult Mutate(string operation, long expectedRevision, string transactionId, long playerId, IWalletAdapter wallet, Func<Account, string> action)
         {
             lock (sync)
@@ -774,7 +750,7 @@ namespace SimpleBank.Core
             }
         }
 
-        private TransactionResult MutateCollection(string operation, long playerId, IWalletAdapter wallet, string transactionId, long expectedRevision, Func<Account, CollectionMutation> action)
+        private TransactionResult MutateCollection(long playerId, IWalletAdapter wallet, string transactionId, long expectedRevision, Func<Account, CollectionMutation> action)
         {
             lock (sync)
             {
@@ -822,7 +798,7 @@ namespace SimpleBank.Core
             }
         }
 
-        private TransactionResult MutateAccountState(string operation, long playerId, string transactionId, long expectedRevision, Func<Account, string> action, string missingAccountMessage = "account-not-found")
+        private TransactionResult MutateAccountState(long playerId, string transactionId, long expectedRevision, Func<Account, string> action, string missingAccountMessage = "account-not-found")
         {
             lock (sync)
             {
@@ -901,13 +877,6 @@ namespace SimpleBank.Core
             loan.OverdueInterestCharged = checked(loan.OverdueInterestCharged + exact);
         }
 
-        private static LoanStatus LoanStatusForDay(LoanContract loan, int day)
-        {
-            if (day <= loan.MaturityDay) return LoanStatus.Current;
-            if (!loan.LockedCollectionEnabled || day < loan.CollectionStartDay) return LoanStatus.Overdue;
-            return day >= loan.DefaultDay ? LoanStatus.Defaulted : LoanStatus.Collection;
-        }
-
         private static bool IsOpenLoan(LoanContract loan)
         {
             return loan != null && loan.Status != LoanStatus.Settled && loan.Status != LoanStatus.Cancelled;
@@ -955,7 +924,7 @@ namespace SimpleBank.Core
             public long PrincipalPaid;
         }
 
-        private void SettleOneDay(int day)
+        private void SettleOneDay(int day, List<TermMaturity> termMaturities)
         {
             foreach (var account in AllAccounts())
             {
@@ -979,6 +948,14 @@ namespace SimpleBank.Core
                         deposit.InterestRemainder = 0m;
                         account.ActiveBalance = checked(account.ActiveBalance + deposit.Balance);
                         account.TermDeposits.Remove(deposit);
+                        termMaturities.Add(new TermMaturity
+                        {
+                            PlayerId = State.WalletMode == WalletMode.Shared ? (long?)null
+                                : State.PersonalAccounts.First(pair => ReferenceEquals(pair.Value, account)).Key,
+                            DepositId = deposit.Id,
+                            Day = day,
+                            Amount = deposit.Balance
+                        });
                     }
                 }
                 if (TotalTermBalance(account.TermDeposits) > long.MaxValue) throw new OverflowException("aggregate term balance");
@@ -996,7 +973,7 @@ namespace SimpleBank.Core
                             account.Loan.InterestRemainder = loanRemainder;
                         }
                         account.Loan.LastSettledDay = day;
-                        account.Loan.Status = LoanStatusForDay(account.Loan, day);
+                        account.Loan.Status = account.Loan.GetOpenStatusForDay(day);
                     }
                 }
             }

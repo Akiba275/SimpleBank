@@ -129,6 +129,13 @@ namespace StardewModdingAPI
         public IModHelper Helper { get; protected set; }
         public IMonitor Monitor { get; protected set; }
         public IManifest ModManifest { get; protected set; }
+        // Supplies the host-owned properties normally initialized by SMAPI.
+        public void InitializeForTest(IModHelper helper, IMonitor monitor)
+        {
+            Helper = helper;
+            Monitor = monitor;
+            Entry(helper);
+        }
         public abstract void Entry(IModHelper helper);
     }
 }
