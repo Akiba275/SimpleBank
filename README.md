@@ -2,7 +2,7 @@
 
 ## 中文说明
 
-当前源码版本为 **Beta 0.1.1**，尚未发布。下列文件名用于本版构建；已发布版本请查看下载列表。
+当前版本为 **Beta 0.1.1**。安装包见 [Nexus Mods 下载列表](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files)；源码和版本记录见 GitHub。
 
 本版将定期和贷款的到期时间改为“X 天后到期”，并简化申请确认内容。贷款确认页可选择“查看条款”阅读完整规则。
 
@@ -42,6 +42,8 @@ Simple Bank 是面向《星露谷物语》1.6 的银行模组。在村长家使�
 
 5. 通过 SMAPI 启动游戏。所有联机玩家应安装相同版本的主模组及随包提供的 Content Patcher 内容包。
 
+主安装包不包含 `config.json`；首次启动时会在主模组目录中自动生成默认配置。退出游戏后覆盖更新会保留已有的有效银行配置。若先删除旧模组目录，请备份并恢复 `config.json`。按键配置 `controls.json` 仍随包提供，修改过按键时请另行备份并恢复。银行数据保存在游戏存档中。
+
 ### 开始使用
 
 ATM 位于村长家墙面上的 (14,8)–(15,9) 格。站在相邻位置，面向 ATM，按游戏交互键打开菜单。通过“概览”“活期”“定期”“贷款”四个页面管理账户。
@@ -70,7 +72,7 @@ ATM 位于村长家墙面上的 (14,8)–(15,9) 格。站在相邻位置，面�
 
 ## English
 
-The current source version is **Beta 0.1.1**, not yet published. The filenames below apply to this build; see the downloads list for published versions.
+The current version is **Beta 0.1.1**. Installable packages are available from the [Nexus Mods files tab](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files); source code and version history are on GitHub.
 
 This update displays term and loan maturity as “due in X days” and simplifies application confirmations. Select “View terms” on the loan confirmation to read the full rules.
 
@@ -109,6 +111,8 @@ Requires Stardew Valley 1.6, SMAPI 4.1.0 or later, and Content Patcher 2.9.0 or 
 4. For the optional welcome letter, install Mail Framework Mod 1.20.0 or later and the separate SimpleBank-MailFramework-0.1.1-beta.zip. MFM is not required for banking or overdue notices.
 
 5. Launch the game through SMAPI. All multiplayer participants should install matching versions of the main mod and the included Content Patcher pack.
+
+The main package does not include `config.json`; default settings are generated in the main mod folder on first launch. Close the game before updating in place to preserve existing valid banking settings. If you delete the old mod folder first, back up and restore `config.json`. The package still includes `controls.json`, so back up and restore that file if you customized your controls. Bank data is stored in the game save.
 
 ### Getting started
 

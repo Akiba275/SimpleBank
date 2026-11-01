@@ -2,6 +2,19 @@
 
 本文记录 Beta 0.1.1 的当前验证范围，并保留 Beta 0.1.0 的发布记录。离线测试使用游戏接口替身，不能代替真实 Stardew Valley/SMAPI 环境中的构建和实机验收。
 
+## Beta 0.1.1 发布构建（2026-11-02）
+
+- 通过 Windows PowerShell 5.1 的统一入口 `build/build.ps1 -GamePath ...`，使用 SDK `10.0.403`、Stardew Valley `1.6.15` 和 SMAPI `4.5.2` 重新完成静态校验、核心 459 项断言、GameHarness 328 项断言、真实 SMAPI 主 DLL 构建及主包/可选包打包。
+- 主项目 0 警告、0 错误；两个测试项目各有 3 条 `NETSDK1138` 生命周期提示，未出现 `CS9057`。目标框架保持 `net6.0`。
+- 本次未启动游戏验收；自动测试和真实引用编译不代表渲染、输入或网络联机已经通过实机测试。下文“尚未发布”指各次验证发生时的状态。
+
+## 配置保留与安装包验证（2026-11-02，0.1.1-beta，尚未发布）
+
+- 主安装包移除 `config.json`；源码中的默认样本及默认值校验保留，`controls.json` 仍随包提供。启动代码未变：已核对 [SMAPI 4.5.2 的 ReadConfig 实现](https://github.com/Pathoschild/SMAPI/blob/4.5.2/src/SMAPI/Framework/ModHelpers/ModHelper.cs#L92)，缺少文件时创建默认配置，已有配置按读取结果写回并补齐缺失字段。未启动游戏验证首次生成。
+- 通过 Windows PowerShell 5.1 的统一入口 `build/build.ps1 -GamePath ...`，使用 SDK `10.0.403` 完成 13 个 JSON 的静态校验、核心 459 项断言、GameHarness 328 项断言、真实 SMAPI DLL 构建和主包/可选包打包。主项目 0 警告、0 错误；两个测试项目各保留 3 条 `NETSDK1138` 生命周期提示，未出现 `CS9057`。
+- 检查生成的主 ZIP，确认没有 `config.json`，且包含主 DLL、主模组 manifest 和 CP manifest。在本地隔离目录预置自定义配置后覆盖解压该 ZIP，配置文件的 SHA-256 保持一致。
+- 同步安装说明、开发说明和首页中英文说明；银行业务、持久化结构及 schema 未修改。未替换已发布附件。
+
 ## 当前版本验证（2026-11-01，0.1.1-beta，尚未发布）
 
 ### 七项局部精简（本次）

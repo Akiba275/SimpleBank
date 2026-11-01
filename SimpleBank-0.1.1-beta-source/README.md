@@ -16,7 +16,7 @@ Simple Bank 是一个面向《星露谷物语》1.6 的 SMAPI 模组。它在村
 
 ## 安装
 
-本版源码为 Beta 0.1.1，尚未发布。已发布版本见 [GitHub 发行列表](https://github.com/Akiba275/SimpleBank/releases) 或 [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/54796)。本版构建后的主包为 `SimpleBank-0.1.1-beta.zip`，欢迎信可选包为 `SimpleBank-MailFramework-0.1.1-beta.zip`；名称带 `source` 的 ZIP 是开发源码，不能直接安装为模组。
+当前版本为 Beta 0.1.1，安装包见 [Nexus Mods 下载列表](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files)。主包为 `SimpleBank-0.1.1-beta.zip`，欢迎信可选包为 `SimpleBank-MailFramework-0.1.1-beta.zip`；名称带 `source` 的 ZIP 是开发源码，不能直接安装为模组。历史发行版见 [GitHub 发行列表](https://github.com/Akiba275/SimpleBank/releases)。
 
 1. 解压主发行包到游戏的 `Mods` 目录。
 2. 确认最终目录中同时存在：
@@ -26,6 +26,8 @@ Simple Bank 是一个面向《星露谷物语》1.6 的 SMAPI 模组。它在村
 4. 通过 SMAPI 启动游戏。
 
 所有联机玩家都应安装相同版本的主模组和 Content Patcher 内容包。
+
+主安装包不包含 `config.json`；首次通过 SMAPI 启动时，会在 `Mods/SimpleBank/SimpleBank` 中自动生成默认配置。退出游戏后覆盖安装新版，会保留已有的有效银行配置。若先删除旧模组文件夹，请备份并恢复自己的 `config.json`。按键配置 `controls.json` 仍随包提供，修改过按键的玩家应另行备份并恢复该文件。银行数据保存在游戏存档中，不在模组文件夹中。
 
 ## 使用方法
 

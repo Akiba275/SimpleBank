@@ -31,7 +31,7 @@ if (Test-Path -LiteralPath $stageRoot) { Remove-Item -LiteralPath $stageRoot -Re
 
 Copy-Item -LiteralPath $manifestPath -Destination $mainRoot
 Copy-Item -LiteralPath $DllPath -Destination (Join-Path $mainRoot 'SimpleBank.dll')
-Copy-Item -LiteralPath (Join-Path $Root 'config.json') -Destination $mainRoot
+# SMAPI ReadConfig creates missing config.json; never ship it over player settings.
 Copy-Item -LiteralPath (Join-Path $Root 'controls.json') -Destination $mainRoot
 foreach ($document in $documentation.PlayerPackage) {
   $source = Join-Path $Root $document.Source

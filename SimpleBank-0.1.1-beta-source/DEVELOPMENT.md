@@ -73,6 +73,8 @@ GitHub 标签使用机器版本号。GitHub 发布主包、可选欢迎信包、
 
 源码包仅包含清单指定的公开文件和目录，并按清单排除本地辅助文件与构建缓存。
 
+主安装包不携带 `config.json`，避免覆盖更新重置玩家的银行配置。模组入口调用 SMAPI `ReadConfig<BankConfig>()`，由 SMAPI 在文件缺失时生成默认配置，并为已有配置补齐缺失字段；已有无效配置仍按启动校验逻辑恢复默认值。源码及源码包保留 `config.json` 作为默认配置样本，并继续校验其与 `BankConfig` 内置默认值一致。`controls.json` 的打包和读取行为保持不变。
+
 `package-release.ps1`、`package-source.ps1` 和 `validate.ps1` 都读取该清单。重命名或移动活动文档时，应修改清单，而不是在多个脚本中增加新的硬编码路径。
 
 ## 运行时架构
