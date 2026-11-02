@@ -1,7 +1,7 @@
 {
   "Name": "[MFM] Simple Bank Notice",
   "Author": "Akiba275",
-  "Version": "0.1.1-beta",
+  "Version": "0.1.2-beta",
   "Description": "Optional one-time in-game notice from Mayor Lewis about the new ATM.",
   "UniqueID": "Akiba275.SimpleBank.Mail",
   "ContentPackFor": {

@@ -38,12 +38,14 @@ namespace SimpleBank
                 && notifiedDeposits.Add(receipt.DepositId)).ToList();
             if (matured.Count > 0)
             {
-                // Decimal avoids overflow when summing receipts from multiple deposits.
-                var amount = matured.Sum(receipt => (decimal)receipt.Amount);
-                Game1.addHUDMessage(new HUDMessage(i18n.Get("message.term-matured", new { count = matured.Count, amount }), HUDMessage.newQuest_type));
+                Game1.addHUDMessage(new HUDMessage(i18n.Get("message.term-matured", new { count = matured.Count }), HUDMessage.newQuest_type));
                 if (diagnostics.Enabled)
+                {
+                    // Decimal avoids overflow when summing receipts for diagnostics.
+                    var amount = matured.Sum(receipt => (decimal)receipt.Amount);
                     diagnostics.Log("maturity-notification: term-shown, screenId=" + Context.ScreenId + ", playerId=" + playerId
                         + ", day=" + day + ", depositIds=" + string.Join(",", matured.Select(receipt => receipt.DepositId)) + ", amount=" + amount);
+                }
             }
 
             Account account;
@@ -52,10 +54,7 @@ namespace SimpleBank
             var loan = account == null ? null : account.Loan;
             if (loan == null || loan.Status != LoanStatus.Current || loan.MaturityDay != day
                 || string.IsNullOrWhiteSpace(loan.Id) || !notifiedLoans.Add(loan.Id)) return;
-            Game1.addHUDMessage(new HUDMessage(i18n.Get("message.loan-due-today", new
-            {
-                principal = loan.Principal, interest = loan.PayableInterest
-            }), HUDMessage.error_type));
+            Game1.addHUDMessage(new HUDMessage(i18n.Get("message.loan-due-today"), HUDMessage.error_type));
             if (diagnostics.Enabled)
                 diagnostics.Log("maturity-notification: loan-shown, screenId=" + Context.ScreenId + ", playerId=" + playerId
                     + ", day=" + day + ", loanId=" + loan.Id + ", principal=" + loan.Principal + ", interest=" + loan.PayableInterest);

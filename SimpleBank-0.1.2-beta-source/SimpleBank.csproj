@@ -8,7 +8,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>SimpleBank</AssemblyName>
     <RootNamespace>SimpleBank</RootNamespace>
-    <Version>0.1.1-beta</Version>
+    <Version>0.1.2-beta</Version>
     <Authors>Akiba275</Authors>
     <Company>Akiba275</Company>
     <Product>Simple Bank</Product>

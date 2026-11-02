@@ -1,12 +1,12 @@
-# Simple Bank — Beta 0.1.1
+# Simple Bank — Beta 0.1.2
 
 ## 中文说明
 
-当前版本为 **Beta 0.1.1**。安装包见 [Nexus Mods 下载列表](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files)；源码和版本记录见 GitHub。
+当前源码版本为 **Beta 0.1.2**，尚未发布。下列文件名对应本版构建；已发布安装包见 [Nexus Mods 下载列表](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files)，源码和版本记录见 GitHub。
 
-本版将定期和贷款的到期时间改为“X 天后到期”，并简化申请确认内容。贷款确认页可选择“查看条款”阅读完整规则。
+本版精简定期和贷款到期当天的提示。
 
-定期和贷款到期当天会弹出游戏内提示：定期显示到期笔数及已转入活期的本息总额；贷款显示待还本金与利息，并提醒次日逾期。同一次游戏会话中不会重复提醒同一笔业务，支持共享与独立账户，无需 MFM。
+定期和贷款到期当天会弹出游戏内提示：定期显示到期笔数，并说明已转入活期；贷款提醒今日到期，请及时还款，避免逾期。同一次游戏会话中不会重复提醒同一笔业务，支持共享与独立账户，无需 MFM。
 
 ### 模组介绍
 
@@ -14,9 +14,9 @@ Simple Bank 是面向《星露谷物语》1.6 的银行模组。在村长家使�
 
 ### 下载文件
 
-- SimpleBank-0.1.1-beta.zip：主模组及必需的 CP 内容包，解压到 Mods 目录。
-- SimpleBank-MailFramework-0.1.1-beta.zip：可选的一次性欢迎信，需要主模组和 MFM 1.20.0 或更高版本。
-- SimpleBank-0.1.1-beta-source.zip：供开发者使用的源码包，不能直接作为模组安装。
+- SimpleBank-0.1.2-beta.zip：主模组及必需的 CP 内容包，解压到 Mods 目录。
+- SimpleBank-MailFramework-0.1.2-beta.zip：可选的一次性欢迎信，需要主模组和 MFM 1.20.0 或更高版本。
+- SimpleBank-0.1.2-beta-source.zip：供开发者使用的源码包，不能直接作为模组安装。
 - SHA256SUMS.txt：上述三个 ZIP 的 SHA-256 校验和。
 
 ### 主要功能
@@ -32,13 +32,13 @@ Simple Bank 是面向《星露谷物语》1.6 的银行模组。在村长家使�
 
 需要 Stardew Valley 1.6、SMAPI 4.1.0 或更高版本，以及 Content Patcher 2.9.0 或更高版本。
 
-1. 下载主包 SimpleBank-0.1.1-beta.zip，解压到游戏的 Mods 目录。
+1. 下载主包 SimpleBank-0.1.2-beta.zip，解压到游戏的 Mods 目录。
 
 2. 保留主包内的两个文件夹：Mods/SimpleBank/SimpleBank 和 Mods/SimpleBank/[CP] Simple Bank Map。
 
 3. 可选安装 Generic Mod Config Menu，以便在游戏内修改设置。
 
-4. 如需欢迎信，可选安装 Mail Framework Mod 1.20.0 或更高版本，以及单独的 SimpleBank-MailFramework-0.1.1-beta.zip。银行业务和逾期通知不依赖 MFM。
+4. 如需欢迎信，可选安装 Mail Framework Mod 1.20.0 或更高版本，以及单独的 SimpleBank-MailFramework-0.1.2-beta.zip。银行业务和逾期通知不依赖 MFM。
 
 5. 通过 SMAPI 启动游戏。所有联机玩家应安装相同版本的主模组及随包提供的 Content Patcher 内容包。
 
@@ -66,17 +66,17 @@ ATM 位于村长家墙面上的 (14,8)–(15,9) 格。站在相邻位置，面�
 
 [GitHub 源码与问题反馈](https://github.com/Akiba275/SimpleBank) · [GitHub 下载](https://github.com/Akiba275/SimpleBank/releases) · [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/54796)
 
-[玩家说明](SimpleBank-0.1.1-beta-source/README.md) · [开发说明](SimpleBank-0.1.1-beta-source/DEVELOPMENT.md) · [验证记录](SimpleBank-0.1.1-beta-source/VERIFICATION.md)
+[玩家说明](SimpleBank-0.1.2-beta-source/README.md) · [开发说明](SimpleBank-0.1.2-beta-source/DEVELOPMENT.md) · [验证记录](SimpleBank-0.1.2-beta-source/VERIFICATION.md)
 
 ---
 
 ## English
 
-The current version is **Beta 0.1.1**. Installable packages are available from the [Nexus Mods files tab](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files); source code and version history are on GitHub.
+The current source version is **Beta 0.1.2**, not yet published. The filenames below apply to this build; published packages are available from the [Nexus Mods files tab](https://www.nexusmods.com/stardewvalley/mods/54796?tab=files), with source code and version history on GitHub.
 
-This update displays term and loan maturity as “due in X days” and simplifies application confirmations. Select “View terms” on the loan confirmation to read the full rules.
+This update shortens the term deposit and loan maturity popups.
 
-In-game popups now appear on the maturity day. Term deposits show the number matured and the total principal and interest transferred to savings; loans show the outstanding principal and interest and warn that they become overdue tomorrow. Each contract is notified once per game session, with support for shared and individual accounts and no MFM requirement.
+In-game popups appear on the maturity day. Term deposits show the number matured and confirm that funds were transferred to savings; loans remind players that payment is due today and to repay on time to avoid overdue status. Each contract is notified once per game session, with support for shared and individual accounts and no MFM requirement.
 
 ### About the mod
 
@@ -84,9 +84,9 @@ Simple Bank is a banking mod for Stardew Valley 1.6. Visit the ATM inside the Ma
 
 ### Downloads
 
-- SimpleBank-0.1.1-beta.zip: main mod and required CP content pack; extract into Mods.
-- SimpleBank-MailFramework-0.1.1-beta.zip: optional one-time welcome letter; requires the main mod and MFM 1.20.0 or later.
-- SimpleBank-0.1.1-beta-source.zip: source package for developers; not an installable mod.
+- SimpleBank-0.1.2-beta.zip: main mod and required CP content pack; extract into Mods.
+- SimpleBank-MailFramework-0.1.2-beta.zip: optional one-time welcome letter; requires the main mod and MFM 1.20.0 or later.
+- SimpleBank-0.1.2-beta-source.zip: source package for developers; not an installable mod.
 - SHA256SUMS.txt: SHA-256 checksums for the three ZIP files above.
 
 ### Features
@@ -102,13 +102,13 @@ Simple Bank is a banking mod for Stardew Valley 1.6. Visit the ATM inside the Ma
 
 Requires Stardew Valley 1.6, SMAPI 4.1.0 or later, and Content Patcher 2.9.0 or later.
 
-1. Download SimpleBank-0.1.1-beta.zip and extract it into your game's Mods directory.
+1. Download SimpleBank-0.1.2-beta.zip and extract it into your game's Mods directory.
 
 2. Keep both included folders: Mods/SimpleBank/SimpleBank and Mods/SimpleBank/[CP] Simple Bank Map.
 
 3. Optionally install Generic Mod Config Menu for in-game settings.
 
-4. For the optional welcome letter, install Mail Framework Mod 1.20.0 or later and the separate SimpleBank-MailFramework-0.1.1-beta.zip. MFM is not required for banking or overdue notices.
+4. For the optional welcome letter, install Mail Framework Mod 1.20.0 or later and the separate SimpleBank-MailFramework-0.1.2-beta.zip. MFM is not required for banking or overdue notices.
 
 5. Launch the game through SMAPI. All multiplayer participants should install matching versions of the main mod and the included Content Patcher pack.
 
@@ -136,4 +136,4 @@ See the player guide for the full banking rules, and the development guide and v
 
 [GitHub source and issue reports](https://github.com/Akiba275/SimpleBank) · [GitHub downloads](https://github.com/Akiba275/SimpleBank/releases) · [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/54796)
 
-[Player guide](SimpleBank-0.1.1-beta-source/README.md) · [Development guide](SimpleBank-0.1.1-beta-source/DEVELOPMENT.md) · [Verification record](SimpleBank-0.1.1-beta-source/VERIFICATION.md)
+[Player guide](SimpleBank-0.1.2-beta-source/README.md) · [Development guide](SimpleBank-0.1.2-beta-source/DEVELOPMENT.md) · [Verification record](SimpleBank-0.1.2-beta-source/VERIFICATION.md)

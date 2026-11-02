@@ -39,9 +39,9 @@ public static partial class Program
             f.HostCoordinator.RecordTermMaturities(result, 17);
             hostNotifier.Check(f.Bank, 101, 17, f.HostCoordinator.GetLocalTermMaturities(17));
             Assert(Game1.HudMessages.Count == 2 && Game1.HudMessages[0].Message == f.Text.Get("message.term-matured",
-                    new { count = personal ? 1 : 2, amount = personal ? 1001 : 3002 })
-                && Game1.HudMessages[1].Message == f.Text.Get("message.loan-due-today", new { principal = 1000, interest = 11 }),
-                "maturity HUD uses localized committed term amounts and final loan interest: " + locale);
+                    new { count = personal ? 1 : 2 })
+                && Game1.HudMessages[1].Message == f.Text.Get("message.loan-due-today"),
+                "maturity HUD shows the localized deposit count and loan repayment reminder: " + locale);
             var revision = f.Bank.State.Revision;
             var active = f.Bank.GetAccount(101).ActiveBalance;
             f.HostCoordinator.RecordTermMaturities(result, 17);
@@ -73,8 +73,8 @@ public static partial class Program
             Game1.stats.DaysPlayed = 17;
             clientNotifier.Check(clientBank, client.LocalPlayerId, 17, client.GetLocalTermMaturities(17));
             Assert(Game1.HudMessages.Count == 2
-                && Game1.HudMessages[0].Message == f.Text.Get("message.term-matured", new { count = personal ? 1 : 2, amount = personal ? 2001 : 3002 })
-                && Game1.HudMessages[1].Message == f.Text.Get("message.loan-due-today", new { principal = personal ? 2000 : 1000, interest = personal ? 21 : 11 }),
+                && Game1.HudMessages[0].Message == f.Text.Get("message.term-matured", new { count = personal ? 1 : 2 })
+                && Game1.HudMessages[1].Message == f.Text.Get("message.loan-due-today"),
                 "late-joining clients and separate local screens receive their own maturity notifications");
             DeliverFundingMessage(client, 101, sent);
             Assert(Game1.HudMessages.Count == 2, "repeated same-day snapshots are deduplicated per screen");
